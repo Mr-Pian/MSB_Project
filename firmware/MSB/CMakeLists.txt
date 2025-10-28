@@ -33,7 +33,9 @@ message("Build type: " ${CMAKE_BUILD_TYPE})
 enable_language(C ASM)
 
 # Create an executable object type
-add_executable(${CMAKE_PROJECT_NAME})
+add_executable(${CMAKE_PROJECT_NAME}
+
+)
 
 # Add STM32CubeMX generated sources
 add_subdirectory(cmake/stm32cubemx)
@@ -50,6 +52,11 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         YunTai/yuntai.c
         system/delay/delay.c
         system/sys/sys.c
+        ST7735_Weact_core/lcd.c
+        ST7735_Weact_core/st7735.c
+        ST7735_Weact_core/st7735_reg.c
+        Control/pid.c
+        Control/control.c
 )
 
 # Add include paths
@@ -57,6 +64,8 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         # Add user defined include paths
         YunTai
         system
+        ST7735_Weact_core
+        Control
 )
 
 # Add project symbols (macros)

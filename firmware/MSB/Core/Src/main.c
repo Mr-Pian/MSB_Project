@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "dma.h"
+#include "spi.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
@@ -27,6 +28,7 @@
 /* USER CODE BEGIN Includes */
 #include "delay/delay.h"
 #include "yuntai.h"
+#include "lcd.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -105,14 +107,17 @@ int main(void)
   MX_UART8_Init();
   MX_UART7_Init();
   MX_TIM15_Init();
+  MX_SPI4_Init();
   /* USER CODE BEGIN 2 */
   /********* user init begin *********/
+  LCD_Init();
   HAL_TIM_Base_Start_IT(&htim15); //开启1ms中断
   /********* user init end *********/
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  LCD_Printf(0, 0, 16, "Hello_World");
 
   while (1)
   {
