@@ -19,7 +19,13 @@ written by abo
 #define MOTOR_CAMERA_RIGHT_MAX	1000
 #define MOTOR_CAMERA_LEFT_MAX		-1000
 
-typedef struct
+//flags define
+#define MOTOR_PARAM_FLAG 1
+#define STABLE_CONTROL_FLAG 2
+#define MOTOR_RESET_FLAG 3
+#define PID_CONTROL_FLAG 4
+
+typedef struct YUNTAI_TIM_Control_Flag
 {
     uint8_t motor_param_flag; //云台调参
     uint8_t stable_control_flag; //云台自稳
@@ -32,7 +38,8 @@ void yuntai_turn_off(void);
 void yuntai_set_zero_point(void);
 void yuntai_set_pos_angle(uint8_t motor_id, float pos_angle_degree);
 void yuntai_reset(void);
+void set_yuntai_flag(uint8_t flag);
 
-extern YUNTAI_TIM_Control_Flag_Typedef the_yuntai;
+extern YUNTAI_TIM_Control_Flag_Typedef yuntai_flags;
 #endif
 
