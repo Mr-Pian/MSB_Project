@@ -109,37 +109,6 @@ void yuntai_control_driver(void)
 	}
 }
 
-/*设定云台YAW、PITCH、CAMERA自由度角度位置*/
-void yuntai_set_pos_angle(uint8_t motor_id, float pos_angle_degree)
-{
-	if (motor_id == MOTOR_YAW)
-	{
-		// if (pos_angle_degree > (MOTOR_YAW_RIGHT_MAX / 360.0f * 16384))
-		// 	pos_angle_degree = (MOTOR_YAW_RIGHT_MAX / 360.0f * 16384);
-		// else if (pos_angle_degree < (MOTOR_YAW_LEFT_MAX / 360.0f * 16384))
-		// 	pos_angle_degree = (MOTOR_YAW_LEFT_MAX / 360.0f * 16384)
-	}
-	else if (motor_id == MOTOR_PITCH)
-	{
-		// if (pos_angle_degree > (MOTOR_PITCH_DOWN_MAX / 360.0f * 16384))
-		// 	pos_angle_degree = (MOTOR_PITCH_DOWN_MAX / 360.0f * 16384);
-		// else if (pos_angle_degree < (MOTOR_PITCH_UP_MAX / 360.0f * 16384))
-		// 	pos_angle_degree = (MOTOR_PITCH_UP_MAX / 360.0f * 16384);
-	}
-	else if (motor_id == MOTOR_CAMERA)
-	{
-		if (pos_angle_degree > (MOTOR_CAMERA_RIGHT_MAX / 360.0f * 16384))
-			pos_angle_degree = (MOTOR_CAMERA_RIGHT_MAX / 360.0f * 16384);
-		else if (pos_angle_degree < (MOTOR_CAMERA_LEFT_MAX / 360.0f * 16384))
-			pos_angle_degree = (MOTOR_CAMERA_LEFT_MAX / 360.0f * 16384);
-	}
-	else
-	{
-		return;
-	}
-	motor_set_position_angle(motor_id, pos_angle_degree);
-}
-
 /*云台关闭*/
 void yuntai_turn_off(void)
 {

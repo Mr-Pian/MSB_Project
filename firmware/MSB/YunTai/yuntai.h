@@ -36,7 +36,6 @@ typedef struct YUNTAI_TIM_Control_Flag
 void yuntai_control_driver(void);
 void yuntai_turn_off(void);
 void yuntai_set_zero_point(void);
-void yuntai_set_pos_angle(uint8_t motor_id, float pos_angle_degree);
 void yuntai_reset(void);
 void set_yuntai_flag(uint8_t flag);
 

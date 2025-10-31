@@ -57,6 +57,8 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         ST7735_Weact_core/st7735_reg.c
         Control/pid.c
         Control/control.c
+        HCI/HCI.c
+        HCI/bits_button.c
 )
 
 # Add include paths
@@ -66,6 +68,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         system
         ST7735_Weact_core
         Control
+        HCI
 )
 
 # Add project symbols (macros)

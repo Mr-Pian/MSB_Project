@@ -2,6 +2,8 @@
 // Created by maodie on 2025/10/29.
 //
 #include "control.h"
+#include "tim.h"
+#include "DMR4315.h"
 
 // 初始化结构体
 Yun_tai_typedef the_yun_tai;
@@ -24,12 +26,12 @@ void Control_Init(void)
     the_yun_tai.Pitch_pid = &pitch_pid_controller;
     pid_init(the_yun_tai.Pitch_pid);
     the_yun_tai.Pitch_pid->f_param_init(the_yun_tai.Pitch_pid, PID_Speed, MAX_PITCH_OUT,
-                                        MAX_PITCH_OUT, 0.0f, 0.0f, -0.0005f, 0.0f);
+                                        MAX_PITCH_OUT, 0.0f, PITCH_KP, PITCH_KI, PITCH_KD);
     the_yun_tai.Pitch_pid->f_pid_switch(the_yun_tai.Pitch_pid, 1); //使能pid
 
     pid_init(the_yun_tai.Yaw_pid);
     the_yun_tai.Yaw_pid->f_param_init(the_yun_tai.Yaw_pid, PID_Speed, MAX_YAW_OUT,
-                                      MAX_YAW_OUT, 0.0f, 0.0f, -0.0005f, 0.0f);
+                                      MAX_YAW_OUT, 0.0f, YAW_KP, YAW_KI, YAW_KD);
     the_yun_tai.Yaw_pid->f_pid_switch(the_yun_tai.Yaw_pid, 1); //使能pid
     // 赋值
     the_pixel_target.real_pixel = &real_pixel;
@@ -58,7 +60,7 @@ void Laser_X_Control(void)
     the_yun_tai.Yaw_pid->target = (float)the_msb.the_pixel_target->target_pixel->pixel_x;
     the_yun_tai.Yaw_pid->f_cal_pid(the_yun_tai.Yaw_pid,
                                    (float)the_msb.the_pixel_target->real_pixel->pixel_x);
-    yuntai_set_pos_angle(MOTOR_YAW, the_yun_tai.Yaw_pid->output);
+    motor_set_position_angle(MOTOR_YAW, -the_yun_tai.Yaw_pid->output);
 }
 
 void Laser_Y_Control(void)
@@ -66,5 +68,19 @@ void Laser_Y_Control(void)
     the_yun_tai.Pitch_pid->target = (float)the_msb.the_pixel_target->target_pixel->pixel_y;
     the_yun_tai.Pitch_pid->f_cal_pid(the_yun_tai.Pitch_pid,
                                      (float)the_msb.the_pixel_target->real_pixel->pixel_y);
-    yuntai_set_pos_angle(MOTOR_PITCH, the_yun_tai.Pitch_pid->output);
+    motor_set_position_angle(MOTOR_PITCH, -the_yun_tai.Pitch_pid->output);
+}
+
+void Laser_set_power(uint8_t power)
+{
+    // power范围（0-99）
+    if (power > 100) { power = 99; }
+    __HAL_TIM_SetCompare(&htim5, TIM_CHANNEL_2, (uint8_t)MAX_PWM_CP*(power/99.0));
+}
+
+// state = 1 -> on otherwise off
+void Laser_on_off(uint8_t state)
+{
+    if (state == 1) { HAL_TIM_PWM_Start(&htim5, TIM_CHANNEL_2); }
+    if (state == 0) { HAL_TIM_PWM_Stop(&htim5, TIM_CHANNEL_2); }
 }

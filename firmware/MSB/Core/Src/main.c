@@ -30,6 +30,7 @@
 #include "yuntai.h"
 #include "lcd.h"
 #include "control.h"
+#include "HCI.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -103,23 +104,29 @@ int main(void)
   MX_SPI4_Init();
   MX_TIM17_Init();
   MX_TIM16_Init();
+  MX_TIM5_Init();
+  MX_TIM14_Init();
+  MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
   /********* user init begin *********/
   LCD_Init();
   LCD_Printf(0, 0, 12, "Motor: %5s", "Lock");
   Control_Init(); //控制初始化
+  HCI_init(); //人机交互初始化
   HAL_UART_Receive_DMA(&huart7, fifo_data, 12);
   HAL_TIM_Base_Start_IT(&htim16); //高优先级定时器 1ms
   HAL_TIM_Base_Start_IT(&htim15); //中优先级定时器 2ms
+  HAL_TIM_Base_Start_IT(&htim14); //中低优先级定时器 5ms
   HAL_TIM_Base_Start_IT(&htim17); //低优先级定时器 100ms
   /********* user init end *********/
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  the_msb.the_pixel_target->target_pixel->pixel_y = 330;
-  the_msb.the_pixel_target->target_pixel->pixel_x = 285;
-  set_yuntai_flag(PID_CONTROL_FLAG);
+  the_msb.the_pixel_target->target_pixel->pixel_y = 380;
+  the_msb.the_pixel_target->target_pixel->pixel_x = 235;
+  //set_yuntai_flag(PID_CONTROL_FLAG);
+  //set_yuntai_flag(MOTOR_PARAM_FLAG);
 
   while (1)
   {
