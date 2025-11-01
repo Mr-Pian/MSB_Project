@@ -41,6 +41,8 @@ void Handle_btn_event(void) //event类型判断
         }
         else if (data == 0x0a) //进入pid模式
         {
+            Laser_set_power(75);
+            Laser_on_off(1);
             set_yuntai_flag(PID_CONTROL_FLAG);
             pid_control_flag = 1;
         }
@@ -53,6 +55,7 @@ void Handle_btn_event(void) //event类型判断
     {
         if (data == 0x2a) //退出pid控制并清空输出
         {
+            Laser_on_off(0);
             the_yun_tai.Pitch_pid->output = 0.0f;
             the_yun_tai.Yaw_pid->output = 0.0f;
             set_yuntai_flag(STABLE_CONTROL_FLAG);
