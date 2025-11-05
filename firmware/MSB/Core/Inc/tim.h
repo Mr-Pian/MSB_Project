@@ -32,13 +32,27 @@ extern "C" {
 
 /* USER CODE END Includes */
 
+extern TIM_HandleTypeDef htim5;
+
+extern TIM_HandleTypeDef htim14;
+
 extern TIM_HandleTypeDef htim15;
 
-/* USER CODE BEGIN Private defines */
+extern TIM_HandleTypeDef htim16;
 
+extern TIM_HandleTypeDef htim17;
+
+/* USER CODE BEGIN Private defines */
+extern uint8_t fifo_data[100];
 /* USER CODE END Private defines */
 
+void MX_TIM5_Init(void);
+void MX_TIM14_Init(void);
 void MX_TIM15_Init(void);
+void MX_TIM16_Init(void);
+void MX_TIM17_Init(void);
+
+void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 
 /* USER CODE BEGIN Prototypes */
 

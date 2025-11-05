@@ -29,6 +29,8 @@
 #include "delay/delay.h"
 #include "yuntai.h"
 #include "lcd.h"
+#include "control.h"
+#include "HCI.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -77,14 +79,6 @@ int main(void)
   /* MPU Configuration--------------------------------------------------------*/
   MPU_Config();
 
-  /* Enable the CPU Cache */
-
-  /* Enable I-Cache---------------------------------------------------------*/
-  SCB_EnableICache();
-
-  /* Enable D-Cache---------------------------------------------------------*/
-  SCB_EnableDCache();
-
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
@@ -108,16 +102,31 @@ int main(void)
   MX_UART7_Init();
   MX_TIM15_Init();
   MX_SPI4_Init();
+  MX_TIM17_Init();
+  MX_TIM16_Init();
+  MX_TIM5_Init();
+  MX_TIM14_Init();
+  MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
   /********* user init begin *********/
   LCD_Init();
-  HAL_TIM_Base_Start_IT(&htim15); //开启1ms中断
+  LCD_Printf(0, 0, 12, "Motor: %5s", "Lock");
+  Control_Init(); //控制初始化
+  HCI_init(); //人机交互初始化
+  HAL_UART_Receive_DMA(&huart7, fifo_data, 12);
+  HAL_TIM_Base_Start_IT(&htim16); //高优先级定时器 1ms
+  HAL_TIM_Base_Start_IT(&htim15); //中优先级定时器 2ms
+  HAL_TIM_Base_Start_IT(&htim14); //中低优先级定时器 5ms
+  HAL_TIM_Base_Start_IT(&htim17); //低优先级定时器 100ms
   /********* user init end *********/
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  LCD_Printf(0, 0, 16, "Hello_World");
+  the_msb.the_pixel_target->target_pixel->pixel_y = 380;
+  the_msb.the_pixel_target->target_pixel->pixel_x = 235;
+  //set_yuntai_flag(PID_CONTROL_FLAG);
+  //set_yuntai_flag(MOTOR_PARAM_FLAG);
 
   while (1)
   {
@@ -205,13 +214,13 @@ void MPU_Config(void)
   */
   MPU_InitStruct.Enable = MPU_REGION_ENABLE;
   MPU_InitStruct.Number = MPU_REGION_NUMBER0;
-  MPU_InitStruct.BaseAddress = 0x24000000;
-  MPU_InitStruct.Size = MPU_REGION_SIZE_512KB;
-  MPU_InitStruct.SubRegionDisable = 0x00;
-  MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL1;
-  MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
-  MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE;
-  MPU_InitStruct.IsShareable = MPU_ACCESS_NOT_SHAREABLE;
+  MPU_InitStruct.BaseAddress = 0x0;
+  MPU_InitStruct.Size = MPU_REGION_SIZE_4GB;
+  MPU_InitStruct.SubRegionDisable = 0x87;
+  MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL0;
+  MPU_InitStruct.AccessPermission = MPU_REGION_NO_ACCESS;
+  MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_DISABLE;
+  MPU_InitStruct.IsShareable = MPU_ACCESS_SHAREABLE;
   MPU_InitStruct.IsCacheable = MPU_ACCESS_NOT_CACHEABLE;
   MPU_InitStruct.IsBufferable = MPU_ACCESS_NOT_BUFFERABLE;
 
