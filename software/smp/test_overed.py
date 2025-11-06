@@ -13,7 +13,7 @@ def create_signed_packet(num1, num2, endian='big'):
     :param endian: 字节序, 'big' (大端) 或 'little' (小端)
     :return: 6字节的 bytes 对象
     """
-    
+
     FRAME_HEADER = b'\x0A'
     FRAME_TAIL = b'\x55'
     
@@ -164,7 +164,7 @@ if __name__ == "__main__":
                 area = cv2.contourArea(contour)
                 
                 # 筛选轮廓：仅处理面积大于某个阈值的轮廓 (例如 100 像素)
-                if area > 20: 
+                if area > 20 and area < 2000: 
                     # 计算轮廓的矩 (moments) 以找到中心点
                     M = cv2.moments(contour)
                     if M["m00"] != 0:
