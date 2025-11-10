@@ -4,6 +4,8 @@
 #include "control.h"
 #include "tim.h"
 #include "DMR4315.h"
+#include "HCI.h"
+#include "usart.h"
 
 // 初始化结构体
 Yun_tai_typedef the_yun_tai;
@@ -21,17 +23,18 @@ void Control_Init(void)
     // yuntai_reset();
     // 云台设置零点
     yuntai_set_zero_point();
-    // Pid 初始化
+    // Pid 初始化 (包括设置从SD卡中读取的初始值)
     the_yun_tai.Yaw_pid = &yaw_pid_controller;
     the_yun_tai.Pitch_pid = &pitch_pid_controller;
     pid_init(the_yun_tai.Pitch_pid);
-    the_yun_tai.Pitch_pid->f_param_init(the_yun_tai.Pitch_pid, PID_Speed, MAX_PITCH_OUT,
-                                        MAX_PITCH_OUT, 0.0f, PITCH_KP, PITCH_KI, PITCH_KD);
+    the_yun_tai.Pitch_pid->f_param_init(the_yun_tai.Pitch_pid, PID_Speed, MSB_Data.Max_y_output,
+                                        MSB_Data.Max_y_output, 0.0f, MSB_Data.pitch_kp, MSB_Data.pitch_ki,
+                                        MSB_Data.pitch_kd);
     the_yun_tai.Pitch_pid->f_pid_switch(the_yun_tai.Pitch_pid, 1); //使能pid
 
     pid_init(the_yun_tai.Yaw_pid);
-    the_yun_tai.Yaw_pid->f_param_init(the_yun_tai.Yaw_pid, PID_Speed, MAX_YAW_OUT,
-                                      MAX_YAW_OUT, 0.0f, YAW_KP, YAW_KI, YAW_KD);
+    the_yun_tai.Yaw_pid->f_param_init(the_yun_tai.Yaw_pid, PID_Speed, MSB_Data.Max_x_output,
+                                      MSB_Data.Max_x_output, 0.0f, MSB_Data.yaw_kp, MSB_Data.yaw_ki, MSB_Data.yaw_kd);
     the_yun_tai.Yaw_pid->f_pid_switch(the_yun_tai.Yaw_pid, 1); //使能pid
     // 赋值
     the_pixel_target.real_pixel = &real_pixel;
@@ -71,16 +74,9 @@ void Laser_Y_Control(void)
     motor_set_position_angle(MOTOR_PITCH, -the_yun_tai.Pitch_pid->output);
 }
 
-void Laser_set_power(uint8_t power)
-{
-    // power范围（0-99）
-    if (power > 100) { power = 99; }
-    __HAL_TIM_SetCompare(&htim5, TIM_CHANNEL_2, (uint8_t)MAX_PWM_CP*(power/99.0));
-}
 
-// state = 1 -> on otherwise off
-void Laser_on_off(uint8_t state)
+//  send the info
+void Laser_send(uint8_t* data, uint16_t length)
 {
-    if (state == 1) { HAL_TIM_PWM_Start(&htim5, TIM_CHANNEL_2); }
-    if (state == 0) { HAL_TIM_PWM_Stop(&htim5, TIM_CHANNEL_2); }
+    HAL_UART_Transmit_DMA(&huart4, data, length);
 }

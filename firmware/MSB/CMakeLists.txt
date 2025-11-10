@@ -34,7 +34,7 @@ enable_language(C ASM)
 
 # Create an executable object type
 add_executable(${CMAKE_PROJECT_NAME}
-
+        Core/Src/xprintf.c
 )
 
 # Add STM32CubeMX generated sources
@@ -59,6 +59,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         Control/control.c
         HCI/HCI.c
         HCI/bits_button.c
+
 )
 
 # Add include paths
@@ -88,5 +89,6 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
 
 target_link_options(${CMAKE_PROJECT_NAME} PRIVATE
         # Add user defined symbols
-        -u_printf_float
+        #-u_printf_float
+        -u_scanf_float
 )

@@ -124,13 +124,13 @@ void yuntai_turn_off(void)
 /*云台设置初始零点*/
 void yuntai_set_zero_point(void)
 {
-	//delay_ms(100);
+	delay_ms(100);
 	motor_set_zero_point(MOTOR_YAW);
 	delay_ms(5);
 	motor_set_zero_point(MOTOR_PITCH);
 	delay_ms(5);
-	// motor_set_zero_point(MOTOR_CAMERA);
-	// delay_ms(5);
+	motor_set_zero_point(MOTOR_CAMERA);
+	delay_ms(5);
 }
 
 /*云台回到初始零点*/

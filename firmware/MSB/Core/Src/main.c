@@ -19,6 +19,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "dma.h"
+#include "fatfs.h"
+#include "sdmmc.h"
 #include "spi.h"
 #include "tim.h"
 #include "usart.h"
@@ -51,7 +53,6 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -63,7 +64,7 @@ static void MPU_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+uint8_t temp[] = "Hello World!\n";
 /* USER CODE END 0 */
 
 /**
@@ -104,15 +105,17 @@ int main(void)
   MX_SPI4_Init();
   MX_TIM17_Init();
   MX_TIM16_Init();
-  MX_TIM5_Init();
   MX_TIM14_Init();
   MX_USART2_UART_Init();
+  MX_UART4_Init();
+  MX_SDMMC1_SD_Init();
+  MX_FATFS_Init();
   /* USER CODE BEGIN 2 */
   /********* user init begin *********/
   LCD_Init();
-  LCD_Printf(0, 0, 12, "Motor: %5s", "Lock");
-  Control_Init(); //控制初始化
-  HCI_init(); //人机交互初始化
+  LCD_Printf(0, 0, 12, "%5s", "FatFs Init, wait 1 sec");
+  HCI_init(); //人机交互初始化 (这里有读sd卡的1s延时)
+  Control_Init(); //控制初始化 (一定要放在HCI_init后面)
   HAL_UART_Receive_DMA(&huart7, fifo_data, 12);
   HAL_TIM_Base_Start_IT(&htim16); //高优先级定时器 1ms
   HAL_TIM_Base_Start_IT(&htim15); //中优先级定时器 2ms
@@ -123,13 +126,15 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  the_msb.the_pixel_target->target_pixel->pixel_y = 380;
-  the_msb.the_pixel_target->target_pixel->pixel_x = 235;
+  the_msb.the_pixel_target->target_pixel->pixel_y = MSB_Data.pixel_y_target;
+  the_msb.the_pixel_target->target_pixel->pixel_x = MSB_Data.pixel_x_target;
   //set_yuntai_flag(PID_CONTROL_FLAG);
   //set_yuntai_flag(MOTOR_PARAM_FLAG);
 
   while (1)
   {
+    Laser_send(temp, sizeof(temp));
+    delay_ms(1000);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -168,7 +173,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLM = 5;
   RCC_OscInitStruct.PLL.PLLN = 192;
   RCC_OscInitStruct.PLL.PLLP = 2;
-  RCC_OscInitStruct.PLL.PLLQ = 2;
+  RCC_OscInitStruct.PLL.PLLQ = 4;
   RCC_OscInitStruct.PLL.PLLR = 2;
   RCC_OscInitStruct.PLL.PLLRGE = RCC_PLL1VCIRANGE_2;
   RCC_OscInitStruct.PLL.PLLVCOSEL = RCC_PLL1VCOWIDE;
@@ -236,6 +241,10 @@ void MPU_Config(void)
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
+  LCD_Init();
+  LCD_Printf(0, 0, 16, "%s", "Error handler:");
+  LCD_Printf(0, 16, 12, "%s", "Check BSP_init");
+  LCD_Printf(0, 28, 12, "%s", "Check SD");
   /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
   while (1)
