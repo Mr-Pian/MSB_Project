@@ -30,9 +30,10 @@
 /* USER CODE BEGIN Includes */
 #include "delay/delay.h"
 #include "yuntai.h"
-#include "lcd.h"
 #include "control.h"
 #include "HCI.h"
+#include "TFT18_ST7735S.h"
+#include "DMR4315.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -64,7 +65,6 @@ static void MPU_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-uint8_t temp[] = "Hello World!\n";
 /* USER CODE END 0 */
 
 /**
@@ -112,11 +112,14 @@ int main(void)
   MX_FATFS_Init();
   /* USER CODE BEGIN 2 */
   /********* user init begin *********/
-  LCD_Init();
-  LCD_Printf(0, 0, 12, "%5s", "FatFs Init, wait 1 sec");
+  TFTSPI_Init();
+  TFT_Printf(0, 0, COLOR_WHITE,COLOR_BLACK, fsize_8X16, "%5s", "FatFs Init:");
+  TFT_Printf(0, 16, COLOR_WHITE,COLOR_BLACK, fsize_6X8, "%5s", "wait 1 sec");
   HCI_init(); //人机交互初始化 (这里有读sd卡的1s延时)
   Control_Init(); //控制初始化 (一定要放在HCI_init后面)
   HAL_UART_Receive_DMA(&huart7, fifo_data, 12);
+  __HAL_UART_ENABLE_IT(&huart2, UART_IT_IDLE);
+  HAL_UART_Receive_DMA(&huart2, buffer_from_screen, 100);
   HAL_TIM_Base_Start_IT(&htim16); //高优先级定时器 1ms
   HAL_TIM_Base_Start_IT(&htim15); //中优先级定时器 2ms
   HAL_TIM_Base_Start_IT(&htim14); //中低优先级定时器 5ms
@@ -126,15 +129,18 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  the_msb.the_pixel_target->target_pixel->pixel_y = MSB_Data.pixel_y_target;
-  the_msb.the_pixel_target->target_pixel->pixel_x = MSB_Data.pixel_x_target;
   //set_yuntai_flag(PID_CONTROL_FLAG);
   //set_yuntai_flag(MOTOR_PARAM_FLAG);
 
   while (1)
   {
-    Laser_send(temp, sizeof(temp));
-    delay_ms(1000);
+    /**************** 前台函数 *****************/
+    if (Fatfs_save_flag) //Fatfs保存
+    {
+      Write_SD_data(&MSB_Data);
+      Fatfs_save_flag = 0;
+    }
+    /**************** 前台函数 *****************/
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -241,10 +247,11 @@ void MPU_Config(void)
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
-  LCD_Init();
-  LCD_Printf(0, 0, 16, "%s", "Error handler:");
-  LCD_Printf(0, 16, 12, "%s", "Check BSP_init");
-  LCD_Printf(0, 28, 12, "%s", "Check SD");
+  TFTSPI_Init();
+  TFTSPI_CLS(COLOR_RED);
+  TFT_Printf(0, 0, COLOR_WHITE,COLOR_RED, fsize_8X16, "%5s", "Error Handler:");
+  TFT_Printf(0, 17, COLOR_WHITE,COLOR_RED, fsize_6X8, "%5s", "Check BSP_init");
+  TFT_Printf(0, 28, COLOR_WHITE,COLOR_RED, fsize_6X8, "%5s", "Check SD/FatFs");
   /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
   while (1)

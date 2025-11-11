@@ -43,8 +43,15 @@ void Handle_btn_event(void);
 uint8_t Read_SD_data(MSB_data_typedef* msb_data);
 uint8_t Write_SD_data(MSB_data_typedef* msb_data);
 void Pop_sd(void);
+void draw_motor(uint8_t state, uint8_t last_state);
+void draw_sd(uint8_t sd_state);
+void draw_info(uint8_t info);
+void UART_Instru(uint8_t* uart_buffer, int buffer_length);
 
 extern struct button_obj_t ecbt;
 extern MSB_data_typedef MSB_Data; //存储数据结构体
 extern uint8_t SD_Pop_flag;
+extern uint8_t yuntai_flags_control_enable;
+extern uint8_t buffer_from_screen[100]; //串口屏接受缓冲区
+extern uint8_t Fatfs_save_flag; //fatfs 前后台保存flag
 #endif //MSB_HCI_H

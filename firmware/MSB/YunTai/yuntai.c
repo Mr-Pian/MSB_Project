@@ -7,6 +7,7 @@ written by abo
 #include "DMR4315.h"
 #include "delay/delay.h"
 #include "control.h"
+#include "HCI.h"
 YUNTAI_TIM_Control_Flag_Typedef yuntai_flags;
 
 /*两轴云台控制
@@ -14,97 +15,100 @@ YUNTAI_TIM_Control_Flag_Typedef yuntai_flags;
 */
 void yuntai_control_driver(void)
 {
-	static uint8_t motor_send_delay_flag = 0; //两个云台电机总线发送延迟状态机
-	if (yuntai_flags.motor_param_flag == 1)
+	if (yuntai_flags_control_enable)
 	{
-		//电机调参
-		if (motor_send_delay_flag == 2)
+		static uint8_t motor_send_delay_flag = 0; //两个云台电机总线发送延迟状态机
+		if (yuntai_flags.motor_param_flag == 1)
 		{
-			motor_turn_off(MOTOR_PITCH);
-			motor_send_delay_flag = 1;
+			//电机调参
+			if (motor_send_delay_flag == 2)
+			{
+				motor_turn_off(MOTOR_PITCH);
+				motor_send_delay_flag = 1;
+			}
+			else if (motor_send_delay_flag == 1)
+			{
+				motor_turn_off(MOTOR_YAW);
+				motor_send_delay_flag = 0;
+			}
+			else
+			{
+				motor_send_delay_flag = 2;
+			}
 		}
-		else if (motor_send_delay_flag == 1)
+		else if (yuntai_flags.stable_control_flag == 1) //云台原地自稳控制
 		{
-			motor_turn_off(MOTOR_YAW);
-			motor_send_delay_flag = 0;
+			if (motor_send_delay_flag == 2)
+			{
+				motor_set_related_position(MOTOR_YAW, 0);
+				motor_send_delay_flag = 1;
+			}
+			else if (motor_send_delay_flag == 1)
+			{
+				motor_set_related_position(MOTOR_PITCH, 0);
+				motor_send_delay_flag = 0;
+			}
+			else
+			{
+				motor_set_related_position(MOTOR_CAMERA, 0);
+				motor_send_delay_flag = 2;
+			}
 		}
-		else
+		else if (yuntai_flags.motor_reset_flag == 1) //云台发生错误，复位控制
 		{
-			motor_send_delay_flag = 2;
+			if (motor_send_delay_flag == 2)
+			{
+				motor_set2zero(MOTOR_YAW);
+				motor_send_delay_flag = 1;
+			}
+			else if (motor_send_delay_flag == 1)
+			{
+				motor_set2zero(MOTOR_PITCH);
+				motor_send_delay_flag = 0;
+			}
+			else
+			{
+				motor_set2zero(MOTOR_CAMERA);
+				motor_send_delay_flag = 2;
+			}
 		}
-	}
-	else if (yuntai_flags.stable_control_flag == 1) //云台原地自稳控制
-	{
-		if (motor_send_delay_flag == 2)
+		else if (yuntai_flags.pid_control_flag == 1) //云台PID控制
 		{
-			motor_set_related_position(MOTOR_YAW, 0);
-			motor_send_delay_flag = 1;
+			if (motor_send_delay_flag == 2)
+			{
+				//云台yaw PID驱动
+				Laser_X_Control();
+				motor_send_delay_flag = 1;
+			}
+			else if (motor_send_delay_flag == 1)
+			{
+				//云台pitch PID驱动
+				Laser_Y_Control();
+				motor_send_delay_flag = 0;
+			}
+			else
+			{
+				//云台camera PID驱动
+				motor_send_delay_flag = 2;
+			}
 		}
-		else if (motor_send_delay_flag == 1)
+		else //云台回初始零点控制
 		{
-			motor_set_related_position(MOTOR_PITCH, 0);
-			motor_send_delay_flag = 0;
-		}
-		else
-		{
-			motor_set_related_position(MOTOR_CAMERA, 0);
-			motor_send_delay_flag = 2;
-		}
-	}
-	else if (yuntai_flags.motor_reset_flag == 1) //云台发生错误，复位控制
-	{
-		if (motor_send_delay_flag == 2)
-		{
-			motor_set2zero(MOTOR_YAW);
-			motor_send_delay_flag = 1;
-		}
-		else if (motor_send_delay_flag == 1)
-		{
-			motor_set2zero(MOTOR_PITCH);
-			motor_send_delay_flag = 0;
-		}
-		else
-		{
-			motor_set2zero(MOTOR_CAMERA);
-			motor_send_delay_flag = 2;
-		}
-	}
-	else if (yuntai_flags.pid_control_flag == 1) //云台PID控制
-	{
-		if (motor_send_delay_flag == 2)
-		{
-			//云台yaw PID驱动
-			Laser_X_Control();
-			motor_send_delay_flag = 1;
-		}
-		else if (motor_send_delay_flag == 1)
-		{
-			//云台pitch PID驱动
-			Laser_Y_Control();
-			motor_send_delay_flag = 0;
-		}
-		else
-		{
-			//云台camera PID驱动
-			motor_send_delay_flag = 2;
-		}
-	}
-	else //云台回初始零点控制
-	{
-		if (motor_send_delay_flag == 2)
-		{
-			motor_set2zero(MOTOR_YAW);
-			motor_send_delay_flag = 1;
-		}
-		else if (motor_send_delay_flag == 1)
-		{
-			motor_set2zero(MOTOR_PITCH);
-			motor_send_delay_flag = 0;
-		}
-		else
-		{
-			motor_set2zero(MOTOR_CAMERA);
-			motor_send_delay_flag = 2;
+			if (motor_send_delay_flag == 2)
+			{
+				motor_set2zero(MOTOR_YAW);
+				motor_send_delay_flag = 1;
+			}
+			else if (motor_send_delay_flag == 1)
+			{
+				motor_set2zero(MOTOR_PITCH);
+				motor_send_delay_flag = 0;
+			}
+			else
+			{
+				motor_set2zero(MOTOR_CAMERA);
+				motor_send_delay_flag = 2;
+			}
 		}
 	}
 }

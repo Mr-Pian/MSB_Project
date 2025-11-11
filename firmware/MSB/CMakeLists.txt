@@ -52,13 +52,11 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         YunTai/yuntai.c
         system/delay/delay.c
         system/sys/sys.c
-        ST7735_Weact_core/lcd.c
-        ST7735_Weact_core/st7735.c
-        ST7735_Weact_core/st7735_reg.c
         Control/pid.c
         Control/control.c
         HCI/HCI.c
         HCI/bits_button.c
+        ST7735_Weact_core/TFT18_ST7735S.c
 
 )
 
