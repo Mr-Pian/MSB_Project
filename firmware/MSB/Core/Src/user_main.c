@@ -1,0 +1,66 @@
+//
+// Created by pickaxehit on 2025/11/11.
+//
+
+#include "delay/delay.h"
+#include "yuntai.h"
+#include "control.h"
+#include "HCI.h"
+#include "TFT18_ST7735S.h"
+#include "DMR4315.h"
+#include "tim.h"
+#include "usart.h"
+
+
+uint8_t fifo_data[100] = {0};
+
+int user_main(void) {
+    TFTSPI_Init();
+    TFT_Printf(0, 0, COLOR_WHITE,COLOR_BLACK, fsize_8X16, "%5s", "FatFs Init:");
+    TFT_Printf(0, 16, COLOR_WHITE,COLOR_BLACK, fsize_6X8, "%5s", "wait 1 sec");
+    HCI_init();//人机交互初始化 (这里有读sd卡的1s延时)
+    Control_Init();//控制初始化 (一定要放在HCI_init后面)
+    HAL_UART_Receive_DMA(&huart7, fifo_data, 12);
+    __HAL_UART_ENABLE_IT(&huart2, UART_IT_IDLE);
+    HAL_UART_Receive_DMA(&huart2, buffer_from_screen, 100);
+    HAL_TIM_Base_Start_IT(&htim16);//高优先级定时器 1ms
+    HAL_TIM_Base_Start_IT(&htim15);//中优先级定时器 2ms
+    HAL_TIM_Base_Start_IT(&htim14);//中低优先级定时器 5ms
+    HAL_TIM_Base_Start_IT(&htim17);//低优先级定时器 100ms
+
+    for (;;) {
+        if (Fatfs_save_flag)//Fatfs保存
+        {
+            Fatfs_save_flag = 0;
+            Write_SD_data(&MSB_Data);
+        }
+        if (pid_start_flag) {
+            pid_start_flag = 0;
+            yuntai_set_zero_point();
+            yuntai_set_flag(PID_CONTROL_FLAG);
+        }
+        switch (quest_num) {
+            case 1: {
+                float err = the_yun_tai.Pitch_pid->now_err + the_yun_tai.Yaw_pid->now_err;
+                // float err = 10;
+                if (err < 20 && err > -20) {
+                    HAL_GPIO_WritePin(GPIOA,GPIO_PIN_1, 1);
+
+                } else {
+                    HAL_GPIO_WritePin(GPIOA,GPIO_PIN_1, 0);
+                };
+                break;
+            }
+            default: {
+                quest_num = 0;
+                // pid_stop_flag = 1;
+                break;
+            }
+        }
+        if (pid_stop_flag) {
+            pid_stop_flag = 0;
+            yuntai_set_flag(STABLE_CONTROL_FLAG);
+        }
+    }
+    return 0;
+}

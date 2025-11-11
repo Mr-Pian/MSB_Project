@@ -60,7 +60,7 @@
 void SystemClock_Config(void);
 static void MPU_Config(void);
 /* USER CODE BEGIN PFP */
-
+int user_main(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -112,34 +112,18 @@ int main(void)
   MX_FATFS_Init();
   /* USER CODE BEGIN 2 */
   /********* user init begin *********/
-  TFTSPI_Init();
-  TFT_Printf(0, 0, COLOR_WHITE,COLOR_BLACK, fsize_8X16, "%5s", "FatFs Init:");
-  TFT_Printf(0, 16, COLOR_WHITE,COLOR_BLACK, fsize_6X8, "%5s", "wait 1 sec");
-  HCI_init(); //人机交互初始化 (这里有读sd卡的1s延时)
-  Control_Init(); //控制初始化 (一定要放在HCI_init后面)
-  HAL_UART_Receive_DMA(&huart7, fifo_data, 12);
-  __HAL_UART_ENABLE_IT(&huart2, UART_IT_IDLE);
-  HAL_UART_Receive_DMA(&huart2, buffer_from_screen, 100);
-  HAL_TIM_Base_Start_IT(&htim16); //高优先级定时器 1ms
-  HAL_TIM_Base_Start_IT(&htim15); //中优先级定时器 2ms
-  HAL_TIM_Base_Start_IT(&htim14); //中低优先级定时器 5ms
-  HAL_TIM_Base_Start_IT(&htim17); //低优先级定时器 100ms
+
   /********* user init end *********/
   /* USER CODE END 2 */
-
+user_main();
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  //set_yuntai_flag(PID_CONTROL_FLAG);
-  //set_yuntai_flag(MOTOR_PARAM_FLAG);
+  //yuntai_set_flag(PID_CONTROL_FLAG);
+  //yuntai_set_flag(MOTOR_PARAM_FLAG);
 
   while (1)
   {
     /**************** 前台函数 *****************/
-    if (Fatfs_save_flag) //Fatfs保存
-    {
-      Write_SD_data(&MSB_Data);
-      Fatfs_save_flag = 0;
-    }
     /**************** 前台函数 *****************/
     /* USER CODE END WHILE */
 

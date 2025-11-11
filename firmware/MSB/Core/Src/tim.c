@@ -33,7 +33,7 @@ uint32_t time_counter_for_tim17 = 0;
 uint32_t time_counter_for_tim16 = 0;
 uint32_t time_counter_for_tim14 = 0;
 
-uint8_t fifo_data[100] = {0};
+extern uint8_t fifo_data[100];
 uint8_t draw_motor_last_state = 10;
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)

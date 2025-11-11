@@ -149,7 +149,7 @@ void yuntai_reset(void)
 }
 
 //自动设置操作，调用该函数设置以防止出现两个1, 不要定时重复调用
-void set_yuntai_flag(uint8_t flag)
+void yuntai_set_flag(uint8_t flag)
 {
 	yuntai_flags.motor_param_flag = 0;
 	yuntai_flags.motor_reset_flag = 0;

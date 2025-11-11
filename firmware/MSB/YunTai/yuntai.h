@@ -37,7 +37,7 @@ void yuntai_control_driver(void);
 void yuntai_turn_off(void);
 void yuntai_set_zero_point(void);
 void yuntai_reset(void);
-void set_yuntai_flag(uint8_t flag);
+void yuntai_set_flag(uint8_t flag);
 
 extern YUNTAI_TIM_Control_Flag_Typedef yuntai_flags;
 #endif
