@@ -8,6 +8,7 @@
 #include "HCI.h"
 #include "TFT18_ST7735S.h"
 #include "DMR4315.h"
+#include "laser_control.h"
 #include "tim.h"
 #include "usart.h"
 
@@ -36,29 +37,46 @@ int user_main(void) {
         }
         if (pid_start_flag) {
             pid_start_flag = 0;
+            pid_control_flag = 1;
             yuntai_set_zero_point();
             yuntai_set_flag(PID_CONTROL_FLAG);
         }
         switch (quest_num) {
+            case -1: {
+                break;
+            }
             case 1: {
                 float err = the_yun_tai.Pitch_pid->now_err + the_yun_tai.Yaw_pid->now_err;
-                // float err = 10;
                 if (err < 20 && err > -20) {
-                    HAL_GPIO_WritePin(GPIOA,GPIO_PIN_1, 1);
-
+                    laser_set_level(1);
                 } else {
-                    HAL_GPIO_WritePin(GPIOA,GPIO_PIN_1, 0);
+                    laser_set_level(0);
+                };
+                break;
+            }
+            case 2: {
+                float err = the_yun_tai.Pitch_pid->now_err + the_yun_tai.Yaw_pid->now_err;
+                if (err < 20 && err > -20) {
+                    HAL_Delay(500);
+                    laser_transmit_data(laser_buffer, 11);
+                } else {
+                    laser_set_level(0);
                 };
                 break;
             }
             default: {
                 quest_num = 0;
-                // pid_stop_flag = 1;
+                pid_stop_flag = 1;
+                laser_mode_set(LASER_MODE_UART);
                 break;
             }
         }
         if (pid_stop_flag) {
             pid_stop_flag = 0;
+            pid_control_flag = 0;
+
+            the_yun_tai.Pitch_pid->output = 0.0f;
+            the_yun_tai.Yaw_pid->output = 0.0f;
             yuntai_set_flag(STABLE_CONTROL_FLAG);
         }
     }

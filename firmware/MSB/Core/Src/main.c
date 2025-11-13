@@ -73,6 +73,7 @@ int user_main(void);
   */
 int main(void)
 {
+
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -93,7 +94,7 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-  delay_init(480);
+    delay_init(480);
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -111,24 +112,23 @@ int main(void)
   MX_SDMMC1_SD_Init();
   MX_FATFS_Init();
   /* USER CODE BEGIN 2 */
-  /********* user init begin *********/
-
-  /********* user init end *********/
+    /********* user init begin *********/
+    user_main();
+    /********* user init end *********/
   /* USER CODE END 2 */
-user_main();
+
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  //yuntai_set_flag(PID_CONTROL_FLAG);
-  //yuntai_set_flag(MOTOR_PARAM_FLAG);
+    //yuntai_set_flag(PID_CONTROL_FLAG);
+    //yuntai_set_flag(MOTOR_PARAM_FLAG);
 
-  while (1)
-  {
-    /**************** 前台函数 *****************/
-    /**************** 前台函数 *****************/
+    while (1) {
+        /**************** 前台函数 *****************/
+        /**************** 前台函数 *****************/
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-  }
+    }
   /* USER CODE END 3 */
 }
 
@@ -149,9 +149,7 @@ void SystemClock_Config(void)
   */
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE0);
 
-  while (!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY))
-  {
-  }
+  while(!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY)) {}
 
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
@@ -175,9 +173,9 @@ void SystemClock_Config(void)
 
   /** Initializes the CPU, AHB and APB buses clocks
   */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK
-    | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2
-    | RCC_CLOCKTYPE_D3PCLK1 | RCC_CLOCKTYPE_D1PCLK1;
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2
+                              |RCC_CLOCKTYPE_D3PCLK1|RCC_CLOCKTYPE_D1PCLK1;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.SYSCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_HCLK_DIV2;
@@ -196,7 +194,7 @@ void SystemClock_Config(void)
 
 /* USER CODE END 4 */
 
-/* MPU Configuration */
+ /* MPU Configuration */
 
 void MPU_Config(void)
 {
@@ -222,6 +220,7 @@ void MPU_Config(void)
   HAL_MPU_ConfigRegion(&MPU_InitStruct);
   /* Enables the MPU */
   HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
+
 }
 
 /**
@@ -231,16 +230,15 @@ void MPU_Config(void)
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
-  TFTSPI_Init();
-  TFTSPI_CLS(COLOR_RED);
-  TFT_Printf(0, 0, COLOR_WHITE,COLOR_RED, fsize_8X16, "%5s", "Error Handler:");
-  TFT_Printf(0, 17, COLOR_WHITE,COLOR_RED, fsize_6X8, "%5s", "Check BSP_init");
-  TFT_Printf(0, 28, COLOR_WHITE,COLOR_RED, fsize_6X8, "%5s", "Check SD/FatFs");
-  /* User can add his own implementation to report the HAL error return state */
-  __disable_irq();
-  while (1)
-  {
-  }
+    TFTSPI_Init();
+    TFTSPI_CLS(COLOR_RED);
+    TFT_Printf(0, 0, COLOR_WHITE,COLOR_RED, fsize_8X16, "%5s", "Error Handler:");
+    TFT_Printf(0, 17, COLOR_WHITE,COLOR_RED, fsize_6X8, "%5s", "Check BSP_init");
+    TFT_Printf(0, 28, COLOR_WHITE,COLOR_RED, fsize_6X8, "%5s", "Check SD/FatFs");
+    /* User can add his own implementation to report the HAL error return state */
+    __disable_irq();
+    while (1) {
+    }
   /* USER CODE END Error_Handler_Debug */
 }
 #ifdef USE_FULL_ASSERT
@@ -251,11 +249,11 @@ void Error_Handler(void)
   * @param  line: assert_param error line source number
   * @retval None
   */
-void assert_failed(uint8_t* file, uint32_t line)
+void assert_failed(uint8_t *file, uint32_t line)
 {
   /* USER CODE BEGIN 6 */
-  /* User can add his own implementation to report the file name and line number,
-     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+    /* User can add his own implementation to report the file name and line number,
+       ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */

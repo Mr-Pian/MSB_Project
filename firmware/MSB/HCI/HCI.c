@@ -15,14 +15,15 @@ struct button_obj_t ecbt;
 MSB_data_typedef MSB_Data;//存储数据结构体
 
 //必要变量定义
+uint8_t pid_start_flag = 0;
 uint8_t pid_control_flag = 0;
 uint8_t data = 0;
 uint8_t SD_Pop_flag = 0;
 uint8_t yuntai_flags_control_enable = 1;//flag使能控制 默认使能
 uint8_t Fatfs_save_flag = 0;//fatfs 前后台保存flag
-uint8_t pid_start_flag = 0;
 uint8_t pid_stop_flag = 0;
-uint8_t quest_num = 0;
+int8_t quest_num = 0;
+uint8_t laser_buffer[20] = "helloworld\n";
 
 //必要缓冲区定义
 uint8_t buffer_from_screen[100] = {0};//串口屏接收缓冲区
@@ -46,22 +47,24 @@ void Handle_btn_event(void)//event类型判断
     data = get_button_key_value(&ecbt);
     if (!pid_control_flag) {
         if (data == 0x07) {
+            quest_num = -1;
             yuntai_set_flag(MOTOR_PARAM_FLAG);
         } else if (data == 0x0a)//进入pid模式
         {
-            the_msb.the_pixel_target->target_pixel->pixel_y = MSB_Data.pixel_y_target;
-            the_msb.the_pixel_target->target_pixel->pixel_x = MSB_Data.pixel_x_target;
             // yuntai_set_flag(PID_CONTROL_FLAG);
-            pid_control_flag = 1;
+            // pid_control_flag = 1;
+            quest_num = -1;
             pid_start_flag = 1;
         } else if (data == 0x2a) {
             SD_Pop_flag = 1;
         } else if (data == 0x00) {
+            quest_num = -1;
             yuntai_set_flag(STABLE_CONTROL_FLAG);
         }
     } else {
         if (data == 0x2a)//退出pid控制并清空输出
         {
+            quest_num = 0;
             the_yun_tai.Pitch_pid->output = 0.0f;
             the_yun_tai.Yaw_pid->output = 0.0f;
             yuntai_set_flag(STABLE_CONTROL_FLAG);
@@ -100,6 +103,8 @@ void UART_Instru(uint8_t *uart_buffer, int buffer_length) {
                     {
                         MSB_Data.pixel_x_target = the_msb.the_pixel_target->real_pixel->pixel_x;
                         MSB_Data.pixel_y_target = the_msb.the_pixel_target->real_pixel->pixel_y;
+                        the_msb.the_pixel_target->target_pixel->pixel_y = MSB_Data.pixel_y_target;
+                        the_msb.the_pixel_target->target_pixel->pixel_x = MSB_Data.pixel_x_target;
                         Fatfs_save_flag = 1;//异步写入
                     }
                     break;
@@ -117,18 +122,20 @@ void UART_Instru(uint8_t *uart_buffer, int buffer_length) {
                         }
                         case 0x01: {
                             quest_num = 1;
-
-                            the_msb.the_pixel_target->target_pixel->pixel_y = MSB_Data.pixel_y_target;
-                            the_msb.the_pixel_target->target_pixel->pixel_x = MSB_Data.pixel_x_target;
-                            // yuntai_set_flag(PID_CONTROL_FLAG);
-                            pid_control_flag = 1;
                             pid_start_flag = 1;
+                            break;
+                        }
+                        case 0x02: {
+                            quest_num = 2;
+                            pid_start_flag = 1;
+                            // memcpy(laser_buffer, uart_buffer + 3, 3);
+                            break;
 
-                            GPIO_InitTypeDef GPIO_InitStruct = {0};
-                            GPIO_InitStruct.Pin = GPIO_PIN_0 | GPIO_PIN_1;
-                            GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-                            GPIO_InitStruct.Pull = GPIO_NOPULL;
-                            HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+                        }
+                        case 0x03: {
+
+                            quest_num = 0;
+                            pid_stop_flag = 1;
                             break;
                         }
 
@@ -178,7 +185,7 @@ void draw_info(uint8_t info) {
         TFT_Printf(0, 0, COLOR_WHITE,COLOR_BLACK, fsize_8X16, "%s", "Sys info:");
     } else if (info == 1)//显示target坐标和树莓派回传坐标
     {
-        TFT_Printf(0, 18, COLOR_LIME,COLOR_BLACK, fsize_6X8, "tar: %d,%d",
+        TFT_Printf(0, 18, COLOR_LIME,COLOR_BLACK, fsize_6X8, "tgt: %d,%d",
                    MSB_Data.pixel_x_target, MSB_Data.pixel_y_target);
         TFT_Printf(80, 18,COLOR_RED,COLOR_BLACK, fsize_6X8, "real: %d,%d",
                    the_msb.the_pixel_target->real_pixel->pixel_x,
