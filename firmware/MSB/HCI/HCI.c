@@ -133,7 +133,6 @@ void UART_Instru(uint8_t *uart_buffer, int buffer_length) {
 
                         }
                         case 0x03: {
-
                             quest_num = 0;
                             pid_stop_flag = 1;
                             break;
@@ -143,6 +142,14 @@ void UART_Instru(uint8_t *uart_buffer, int buffer_length) {
                             break;
                     }
                     break;
+                case 0xb1:
+                    quest_num = 1;
+                    pid_start_flag = 1;
+                    break;
+                case 0xb2:
+                    quest_num = 2;
+                    pid_start_flag = 1;
+                    break;
                 default: //不应该发生
                     break;
             }
@@ -151,6 +158,35 @@ void UART_Instru(uint8_t *uart_buffer, int buffer_length) {
 }
 
 /*******************************   串口屏 状态机结束  ************************************/
+/****************************   串口屏数据编码解包函开始  *********************************/
+void XpyEncode(uint8_t *buf, uint8_t *code)
+{ // 串口屏数据编码，buf为帧头地址
+    uint8_t *p = buf + 2;
+    uint8_t temp[4];
+    for (int i = 0; i < 4; i++)
+    {
+        if (p[i] >= 0x30 && p[i] <= 0x39)
+        { // '0'-'9'
+            temp[i] = p[i] - 0x30 + 0x01;
+        }
+        else if (p[i] >= 0x41 && p[i] <= 0x5A)
+        { // 'A'-'Z'
+            temp[i] = p[i] - 0x41 + 0x0B;
+        }
+        else if (p[i] >= 0x61 && p[i] <= 0x7A)
+        { // 'a'-'z'
+            temp[i] = p[i] - 0x61 + 0x25;
+        }
+        else
+        { // 其他
+            temp[i] = 0x00;
+        }
+    }
+    code[0] = (temp[0] << 2) | (temp[1] >> 4);
+    code[1] = (temp[1] << 4) | (temp[2] >> 2);
+    code[2] = (temp[2] << 6) | (temp[3]);
+}
+/****************************   串口屏数据编码解包函结束  *********************************/
 /******************************* LCD 显示绘制部分 **************************************/
 //Motor 状态绘制 0代表Lock 1代表pid 2代表free 3代表调参
 void draw_motor(uint8_t state, uint8_t last_state) {

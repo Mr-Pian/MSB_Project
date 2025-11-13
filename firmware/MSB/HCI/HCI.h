@@ -47,6 +47,7 @@ void draw_sd(uint8_t sd_state);
 void draw_info(uint8_t info);
 void UART_Instru(uint8_t *uart_buffer, int buffer_length);
 
+
 extern struct button_obj_t ecbt;
 extern MSB_data_typedef MSB_Data;//存储数据结构体
 extern uint8_t SD_Pop_flag;
