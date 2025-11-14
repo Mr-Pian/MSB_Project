@@ -26,10 +26,10 @@ class TrackerKalmanFilter:
                                                  [0, 0, 0, 1]], dtype=np.float32)
         
         # 过程噪声协方差 Q
-        self.kalman.processNoiseCov = np.eye(4, dtype=np.float32) * 1e-4
+        self.kalman.processNoiseCov = np.eye(4, dtype=np.float32) * 5e-3
         
         # 测量噪声协方差 R
-        self.kalman.measurementNoiseCov = np.eye(2, dtype=np.float32) * 1e-1
+        self.kalman.measurementNoiseCov = np.eye(2, dtype=np.float32) * 5e-2
         
         # 初始后验误差协方差 P
         self.kalman.errorCovPost = np.eye(4, dtype=np.float32) * 1.0
@@ -89,31 +89,30 @@ class TrackerKalmanFilter:
         
         return self.corrected_point
     
-    
     def get_future_prediction(self, dt_future):
         """
-        根据*最新*的修正后状态 (statePost)，计算未来的位置。
-        这*不会*推进卡尔曼滤波器的内部状态，只是一个"查看"操作。
+        ����*����*��������״̬ (statePost)������δ����λ�á�
+        ��*����*�ƽ��������˲������ڲ�״̬��ֻ��һ��"�鿴"������
 
-        :param dt_future: 您希望预测多远的未来时间 (例如，下一帧的 dt)
-        :return: (x, y) 未来预测点, or None
+        :param dt_future: ��ϣ��Ԥ���Զ��δ��ʱ�� (���磬��һ֡�� dt)
+        :return: (x, y) δ��Ԥ���, or None
         """
         if not self.is_kalman_initialized:
             return None
         
-        # 1. 获取最新的"后验"状态 (即黄色方块代表的状态)
-        # statePost 包含 [x, y, dx, dy]
+        # 1. ��ȡ���µ�"����"״̬ (����ɫ���������״̬)
+        # statePost ���� [x, y, dx, dy]
         state = self.kalman.statePost 
         
-        # 2. 创建一个临时的状态转移矩阵
+        # 2. ����һ����ʱ��״̬ת�ƾ���
         F_future = np.array([[1, 0, dt_future, 0],
                              [0, 1, 0, dt_future],
                              [0, 0, 1, 0],
                              [0, 0, 0, 1]], dtype=np.float32)
         
-        # 3. 计算未来状态: state_future = F_future * state_post
-        #    (注意: @ 是 numpy 的矩阵乘法)
+        # 3. ����δ��״̬: state_future = F_future * state_post
+        #    (ע��: @ �� numpy �ľ���˷�)
         future_state = F_future @ state
         
-        # 4. 返回未来状态的 (x, y)
+        # 4. ����δ��״̬�� (x, y)
         return (int(future_state[0, 0]), int(future_state[1, 0]))

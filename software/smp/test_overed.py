@@ -13,7 +13,7 @@ def create_signed_packet(num1, num2, endian='big'):
     :param endian: 字节序, 'big' (大端) 或 'little' (小端)
     :return: 6字节的 bytes 对象
     """
-
+    
     FRAME_HEADER = b'\x0A'
     FRAME_TAIL = b'\x55'
     
@@ -113,19 +113,31 @@ if __name__ == "__main__":
     # except Exception as e:
     #     print(f"发生错误: {e}")
 
-
-
-
     previous_time = 0
     now_time = 0
     # --- 2. 打开摄像头 ---
-    cap = cv2.VideoCapture(1) # 0 通常是你的默认摄像头
-
-
+    cap = cv2.VideoCapture(0) # 0 通常是你的默认摄像头
 
     if not cap.isOpened():
         print("错误：无法打开摄像头。")
         exit()
+
+    # 串口设备名称，树莓派 5 上 /dev/serial0 通常会映射到 UART0
+    port = '/dev/serial0'
+    # 波特率（根据需要修改，常用 9600、115200 等）
+    baudrate = 115200
+    # 打开串口
+    try:
+        ser = serial.Serial(port=port,
+                            baudrate=baudrate,
+                            bytesize=serial.EIGHTBITS,
+                            parity=serial.PARITY_NONE,
+                            stopbits=serial.STOPBITS_ONE,
+                            timeout=1)  # 读取超时 1 秒
+    except serial.SerialException as e:
+        print(f"无法打开串口 {port}: {e}")
+ 
+    print(f"串口 {port} 已打开，波特率 {baudrate}")
 
     print("按 'q' 键退出...")
 
@@ -164,7 +176,7 @@ if __name__ == "__main__":
                 area = cv2.contourArea(contour)
                 
                 # 筛选轮廓：仅处理面积大于某个阈值的轮廓 (例如 100 像素)
-                if area > 20 and area < 2000: 
+                if area > 20 and area <4000: 
                     # 计算轮廓的矩 (moments) 以找到中心点
                     M = cv2.moments(contour)
                     if M["m00"] != 0:
@@ -203,13 +215,21 @@ if __name__ == "__main__":
 
                     print("交点:", intersection_point)
                     
+                    #串口发送
+                    ser.write(create_signed_packet(intersection_point[0], intersection_point[1]))
+                    
                     cv2.drawMarker(frame, 
                                 intersection_point,
                                 color,
                                 markerType=cv2.MARKER_CROSS,
                                 markerSize=marker_size,
                                 thickness=thickness)
-
+                #else:
+                    #ser.write(b'\x0A'+ b'\xFE'+ b'\xFE'+ b'\xFE'+ b'\xFE'+b'\x55')
+            #else:
+                #ser.write(b'\x0A'+ b'\xFE'+ b'\xFE'+ b'\xFE'+ b'\xFE'+b'\x55')
+        #else:
+            #ser.write(b'\x0A'+ b'\xFE'+ b'\xFE'+ b'\xFE'+ b'\xFE'+b'\x55')                    
         # --- 6. 显示图像 ---
         previous_time = time.time()
         fps = -1/(now_time - previous_time) if (now_time - previous_time)!=0 else 0

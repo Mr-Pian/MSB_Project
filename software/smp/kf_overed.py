@@ -8,6 +8,7 @@ import struct
 from kalman_filter_module import TrackerKalmanFilter
 
 
+
 def create_signed_packet(num1, num2, endian='big'):
     """ (函数内容保持不变) """
     FRAME_HEADER = b'\x0A'
@@ -64,6 +65,8 @@ if __name__ == "__main__":
 
     MIN_CONTOUR_AREA = 20
     MAX_CONTOUR_AREA = 2000
+    LENTH = 50
+
 
     previous_time = 0
     now_time = 0
@@ -76,11 +79,28 @@ if __name__ == "__main__":
     # "predicted_point" 是对 *下一帧* 的预测 (蓝色十字)
     predicted_point = None
     
-    cap = cv2.VideoCapture(1) 
+    cap = cv2.VideoCapture(0) 
     
     if not cap.isOpened():
         print("错误：无法打开摄像头。")
         exit()
+
+    # 串口设备名称，树莓派 5 上 /dev/serial0 通常会映射到 UART0
+    port = '/dev/serial0'
+    # 波特率（根据需要修改，常用 9600、115200 等）
+    baudrate = 115200
+    # 打开串口
+    try:
+        ser = serial.Serial(port=port,
+                            baudrate=baudrate,
+                            bytesize=serial.EIGHTBITS,
+                            parity=serial.PARITY_NONE,
+                            stopbits=serial.STOPBITS_ONE,
+                            timeout=1)  # 读取超时 1 秒
+    except serial.SerialException as e:
+        print(f"无法打开串口 {port}: {e}")
+ 
+    print(f"串口 {port} 已打开，波特率 {baudrate}")
 
     print("按 'q' 键退出...")
 
@@ -156,21 +176,31 @@ if __name__ == "__main__":
         # *在*修正之后, 我们使用 *最新* 的速度和位置
         # 来预测 *下一帧* (k+1) 会在哪里
         # 我们假设下一帧的 dt 和当前帧 dt 相同
-        predicted_point = kalman_tracker.get_future_prediction(dt) 
+        predicted_point = kalman_tracker.get_future_prediction(8*dt) 
 
         
-        # --- 5. 绘制结果 ---
+        # --- 5.1 绘制结果 ---
         
         # (绘制 黄色方块: *当前帧* 的最终平滑位置)
         if corrected_point is not None:
+            ser.write(create_signed_packet(corrected_point[0], corrected_point[1]))
             cv2.drawMarker(frame, corrected_point, (0, 255, 255),
                            markerType=cv2.MARKER_SQUARE, markerSize=20, thickness=2)
 
         # (绘制 蓝色十字: *下一帧* 的预测位置)
         if predicted_point is not None:
+
             cv2.drawMarker(frame, predicted_point, (255, 100, 0), 
                            markerType=cv2.MARKER_CROSS, markerSize=20, thickness=2)
-                
+            
+        # --- 5.2 计算并绘制修正后的预测延长线交点 ---        
+        fix_point = (0,0)
+        if predicted_point is not None and corrected_point is not None and predicted_point[1] != corrected_point[1] and intersection_point is not None:
+            k=(intersection_point[0] - predicted_point[0])/(predicted_point[1]-corrected_point[1])
+        fix_point =  int(intersection_point[0] + k*(LENTH), int(intersection_point[1] + LENTH))
+        cv2.drawMarker(frame, fix_point, (255, 0, 255),
+                          markerType=cv2.MARKER_TILTED_CROSS, markerSize=20, thickness=2)
+        
         # --- 6. 显示图像 ---
         if dt > 0:
             fps = 1.0 / dt
