@@ -18,10 +18,11 @@ MSB_typedef the_msb;
 uint16_convert_typedef convert_data;
 
 void Control_Init(void) {
-    // // 复位云台
-    // yuntai_reset();
-    // 云台设置零点
     yuntai_set_zero_point();
+    // // 复位云台
+    //yuntai_reset();
+    // 云台设置零点
+
     // Pid 初始化 (包括设置从SD卡中读取的初始值)
     the_yun_tai.Yaw_pid = &yaw_pid_controller;
     the_yun_tai.Pitch_pid = &pitch_pid_controller;

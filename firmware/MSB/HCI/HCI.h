@@ -46,6 +46,7 @@ void draw_motor(uint8_t state, uint8_t last_state);
 void draw_sd(uint8_t sd_state);
 void draw_info(uint8_t info);
 void UART_Instru(uint8_t *uart_buffer, int buffer_length);
+void XpyEncode(uint8_t *buf, uint8_t *code);
 
 
 extern struct button_obj_t ecbt;

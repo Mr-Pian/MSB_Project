@@ -123,8 +123,6 @@ int main(void)
     //yuntai_set_flag(MOTOR_PARAM_FLAG);
 
     while (1) {
-        /**************** 前台函数 *****************/
-        /**************** 前台函数 *****************/
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -161,7 +159,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLM = 5;
   RCC_OscInitStruct.PLL.PLLN = 192;
   RCC_OscInitStruct.PLL.PLLP = 2;
-  RCC_OscInitStruct.PLL.PLLQ = 4;
+  RCC_OscInitStruct.PLL.PLLQ = 15;
   RCC_OscInitStruct.PLL.PLLR = 2;
   RCC_OscInitStruct.PLL.PLLRGE = RCC_PLL1VCIRANGE_2;
   RCC_OscInitStruct.PLL.PLLVCOSEL = RCC_PLL1VCOWIDE;

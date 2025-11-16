@@ -28,7 +28,7 @@
 #include "HCI.h"
 /* USER END INCLUDE */
 
-uint32_t time_counter = 0;
+uint32_t time_counter_for_tim15 = 0;
 uint32_t time_counter_for_tim17 = 0;
 uint32_t time_counter_for_tim16 = 0;
 uint32_t time_counter_for_tim14 = 0;
@@ -36,79 +36,72 @@ uint32_t time_counter_for_tim14 = 0;
 extern uint8_t fifo_data[100];
 uint8_t draw_motor_last_state = 10;
 
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
-{
-  if (htim == &htim16) //高优先级时基，控制所在时基 1ms
-  {
-    if (!(time_counter % 1)) //1ms时基
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+    if (htim == &htim16)//高优先级时基，控制所在时基 1ms
     {
-      get_xy_from_raspi(fifo_data, 100);
+        if (!(time_counter_for_tim16 % 1))//1ms时基
+        {
+            get_xy_from_raspi(fifo_data, 100);
+            //yuntai_control_driver();//云台控制;
+        }
+        if (!(time_counter_for_tim16 % 5))//10ms时基
+        {
+            yuntai_control_driver();//云台控制;
+        }
+        time_counter_for_tim16++;
     }
-    if (!(time_counter % 10)) //10ms时基
-    {
-      yuntai_control_driver(); //云台控制
-    }
-    time_counter_for_tim16++;
-  }
 
-  if (htim == &htim15) //中优先级时基 2ms
-  {
-    if (!(time_counter % 4)) //8ms时基
+    if (htim == &htim15)//中优先级时基 2ms
     {
-      ;
+        if (!(time_counter_for_tim15 % 4))//8ms时基
+        {
+            ;
+        }
+        if (!(time_counter_for_tim15 % 50))//100ms时基
+        {
+            HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_3);//LED blink
+        }
+        time_counter_for_tim15++;
     }
-    if (!(time_counter % 50)) //100ms时基
-    {
-      HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_3); //LED blink
-    }
-    time_counter++;
-  }
 
-  if (htim == &htim14) //中低优先级时基 5ms
-  {
-    if (!(time_counter_for_tim14 % 1)) //5ms按键并更新按键状态
+    if (htim == &htim14)//中低优先级时基 5ms
     {
-      button_ticks();
-      Handle_btn_event();
+        if (!(time_counter_for_tim14 % 1))//5ms按键并更新按键状态
+        {
+            button_ticks();
+            Handle_btn_event();
+        }
+        time_counter_for_tim14++;
     }
-    time_counter_for_tim14++;
-  }
 
-  if (htim == &htim17) //低优先级时基 100ms
-  {
-    if (!(time_counter_for_tim17 % 1)) //100ms时基
+    if (htim == &htim17)//低优先级时基 100ms
     {
-      // 弹出sd卡
-      if (SD_Pop_flag == 1)
-      {
-        Pop_sd();
-        draw_sd(0);
-      }
-      //draw_motor
-      if (yuntai_flags.motor_param_flag == 1 && yuntai_flags_control_enable)
-      {
-        draw_motor(2, draw_motor_last_state);
-        draw_motor_last_state = 2;
-      }
-      else if (yuntai_flags.stable_control_flag == 1 && yuntai_flags_control_enable)
-      {
-        draw_motor(0, draw_motor_last_state);
-        draw_motor_last_state = 0;
-      }
-      else if (yuntai_flags.pid_control_flag == 1 && yuntai_flags_control_enable)
-      {
-        draw_motor(1, draw_motor_last_state);
-        draw_motor_last_state = 1;
-      }
-      else //调参界面
-      {
-        draw_motor(3, draw_motor_last_state);
-        draw_motor_last_state = 3;
-      }
-      draw_info(1);
+        if (!(time_counter_for_tim17 % 1))//100ms时基
+        {
+            // 弹出sd卡
+            if (SD_Pop_flag == 1) {
+                Pop_sd();
+                draw_sd(0);
+            }
+            //draw_motor
+            if (yuntai_flags.motor_param_flag == 1 && yuntai_flags_control_enable) {
+                draw_motor(2, draw_motor_last_state);
+                draw_motor_last_state = 2;
+            } else if (yuntai_flags.stable_control_flag == 1 && yuntai_flags_control_enable) {
+                draw_motor(0, draw_motor_last_state);
+                draw_motor_last_state = 0;
+            } else if (yuntai_flags.pid_control_flag == 1 && yuntai_flags_control_enable) {
+                draw_motor(1, draw_motor_last_state);
+                draw_motor_last_state = 1;
+            } else//调参界面
+            {
+                draw_motor(3, draw_motor_last_state);
+                draw_motor_last_state = 3;
+            }
+            draw_info(1);
+        }
+        time_counter_for_tim17++;
     }
-    time_counter_for_tim17++;
-  }
 }
 
 /* USER CODE END 0 */

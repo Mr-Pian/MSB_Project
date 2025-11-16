@@ -23,7 +23,7 @@ uint8_t yuntai_flags_control_enable = 1;//flag使能控制 默认使能
 uint8_t Fatfs_save_flag = 0;//fatfs 前后台保存flag
 uint8_t pid_stop_flag = 0;
 int8_t quest_num = 0;
-uint8_t laser_buffer[20] = "helloworld\n";
+uint8_t laser_buffer[20] = {0x1a, 0x48, 0x49, 0x50, 0x0a};
 
 //必要缓冲区定义
 uint8_t buffer_from_screen[100] = {0};//串口屏接收缓冲区
@@ -47,22 +47,25 @@ void Handle_btn_event(void)//event类型判断
     data = get_button_key_value(&ecbt);
     if (!pid_control_flag) {
         if (data == 0x07) {
+            //非pid长按
             quest_num = -1;
             yuntai_set_flag(MOTOR_PARAM_FLAG);
-        } else if (data == 0x0a)//进入pid模式
+        } else if (data == 0x0a)//进入pid模式（双击）
         {
             // yuntai_set_flag(PID_CONTROL_FLAG);
             // pid_control_flag = 1;
             quest_num = -1;
             pid_start_flag = 1;
         } else if (data == 0x2a) {
+            //非pid三击
             SD_Pop_flag = 1;
         } else if (data == 0x00) {
+            //没按
             quest_num = -1;
             yuntai_set_flag(STABLE_CONTROL_FLAG);
         }
     } else {
-        if (data == 0x2a)//退出pid控制并清空输出
+        if (data == 0x2a)//退出pid控制并清空输出（pid模式三击）
         {
             quest_num = 0;
             the_yun_tai.Pitch_pid->output = 0.0f;
@@ -112,44 +115,47 @@ void UART_Instru(uint8_t *uart_buffer, int buffer_length) {
                     yuntai_flags_control_enable = 1;//重新使能flag控制
                     break;
                 /******* 调试界面 ********/
-
-                case 0xbb:
-                    switch (uart_buffer[i + 2]) {
-                        case 0x00: {
-                            pid_stop_flag = 1;
-                            quest_num = 0;
-                            break;
-                        }
-                        case 0x01: {
-                            quest_num = 1;
-                            pid_start_flag = 1;
-                            break;
-                        }
-                        case 0x02: {
-                            quest_num = 2;
-                            pid_start_flag = 1;
-                            // memcpy(laser_buffer, uart_buffer + 3, 3);
-                            break;
-
-                        }
-                        case 0x03: {
-                            quest_num = 0;
-                            pid_stop_flag = 1;
-                            break;
-                        }
-
-                        default:
-                            break;
-                    }
-                    break;
-                case 0xb1:
+                /******* 题目界面 ********/
+                // case 0xbb:
+                //     switch (uart_buffer[i + 2]) {
+                //         case 0x00: {
+                //             pid_stop_flag = 1;
+                //             quest_num = 0;
+                //             break;
+                //         }
+                //         case 0x01: {
+                //             quest_num = 1;
+                //             pid_start_flag = 1;
+                //             break;
+                //         }
+                //         case 0x02: {
+                //             quest_num = 2;
+                //             pid_start_flag = 1;
+                //             // memcpy(laser_buffer, uart_buffer + 3, 3);
+                //             break;
+                //
+                //         }
+                //         case 0x03: {
+                //             quest_num = 0;
+                //             pid_stop_flag = 1;
+                //             break;
+                //         }
+                //
+                //         default:
+                //             break;
+                //     }
+                //     break;
+                case 0xb1: //基础第一问
                     quest_num = 1;
                     pid_start_flag = 1;
                     break;
-                case 0xb2:
+                case 0xb2: //基础第二问
+                    //做帧
+                    //XpyEncode(uart_buffer, laser_buffer);
                     quest_num = 2;
                     pid_start_flag = 1;
                     break;
+                /******* 题目界面 ********/
                 default: //不应该发生
                     break;
             }
@@ -159,33 +165,32 @@ void UART_Instru(uint8_t *uart_buffer, int buffer_length) {
 
 /*******************************   串口屏 状态机结束  ************************************/
 /****************************   串口屏数据编码解包函开始  *********************************/
-void XpyEncode(uint8_t *buf, uint8_t *code)
-{ // 串口屏数据编码，buf为帧头地址
+void XpyEncode(uint8_t *buf, uint8_t *code) {
+    // 串口屏数据编码，buf为帧头地址
     uint8_t *p = buf + 2;
     uint8_t temp[4];
-    for (int i = 0; i < 4; i++)
-    {
-        if (p[i] >= 0x30 && p[i] <= 0x39)
-        { // '0'-'9'
+    for (int i = 0; i < 4; i++) {
+        if (p[i] >= 0x30 && p[i] <= 0x39) {
+            // '0'-'9'
             temp[i] = p[i] - 0x30 + 0x01;
-        }
-        else if (p[i] >= 0x41 && p[i] <= 0x5A)
-        { // 'A'-'Z'
+        } else if (p[i] >= 0x41 && p[i] <= 0x5A) {
+            // 'A'-'Z'
             temp[i] = p[i] - 0x41 + 0x0B;
-        }
-        else if (p[i] >= 0x61 && p[i] <= 0x7A)
-        { // 'a'-'z'
+        } else if (p[i] >= 0x61 && p[i] <= 0x7A) {
+            // 'a'-'z'
             temp[i] = p[i] - 0x61 + 0x25;
-        }
-        else
-        { // 其他
+        } else {
+            // 其他
             temp[i] = 0x00;
         }
     }
-    code[0] = (temp[0] << 2) | (temp[1] >> 4);
-    code[1] = (temp[1] << 4) | (temp[2] >> 2);
-    code[2] = (temp[2] << 6) | (temp[3]);
+    code[0] = 0xaa;
+    code[1] = (temp[0] << 2) | (temp[1] >> 4);
+    code[2] = (temp[1] << 4) | (temp[2] >> 2);
+    code[3] = (temp[2] << 6) | (temp[3]);
+    code[4] = 0x0a;
 }
+
 /****************************   串口屏数据编码解包函结束  *********************************/
 /******************************* LCD 显示绘制部分 **************************************/
 //Motor 状态绘制 0代表Lock 1代表pid 2代表free 3代表调参

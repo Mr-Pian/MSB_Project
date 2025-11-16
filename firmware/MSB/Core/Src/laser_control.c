@@ -7,7 +7,7 @@
 #include "laser_control.h"
 
 #define LASER_GPIO_PORT GPIOA
-#define LASER_GPIO_PIN GPIO_PIN_1
+#define LASER_GPIO_PIN GPIO_PIN_12
 #define LASER_UART &huart4
 
 laser_mode_t laser_mode_status = LASER_MODE_UART;
