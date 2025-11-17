@@ -19,7 +19,8 @@
 //Fatfs 文件名
 #define FILENAME "0:MSB_parameters.txt"
 
-typedef struct {
+typedef struct
+{
     // 预瞄点坐标
     uint16_t pixel_x_target;
     uint16_t pixel_y_target;
@@ -47,6 +48,7 @@ void draw_sd(uint8_t sd_state);
 void draw_info(uint8_t info);
 void UART_Instru(uint8_t *uart_buffer, int buffer_length);
 void XpyEncode(uint8_t *buf, uint8_t *code);
+void XqzEncode(const uint8_t *buf, uint8_t *code);
 
 
 extern struct button_obj_t ecbt;
@@ -60,4 +62,6 @@ extern uint8_t pid_stop_flag;
 extern uint8_t pid_control_flag;
 extern int8_t quest_num;
 extern uint8_t laser_buffer[20];
+extern uint8_t laser_temp_buffer1[20];
+extern uint8_t laser_temp_buffer2[20];
 #endif //MSB_HCI_H

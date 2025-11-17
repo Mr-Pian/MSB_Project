@@ -21,11 +21,11 @@ uint8_t fifo_data[100] = {0};//树莓派串口接受缓冲区
 /************必要变量定义************/
 
 /************必要标志定义************/
-uint8_t task2_laser_mode_set_flag = 0;//在基础第二问开始时设置一次UARTmode
-uint8_t task1_laser_mode_set_flag = 0;//在基础第一问开始时设置一次UARTmode
+int swap_uart_buffer_counter = -50;
 /************必要标志定义************/
 
-int user_main(void) {
+int user_main(void)
+{
     TFTSPI_Init();
     TFT_Printf(0, 0, COLOR_WHITE,COLOR_BLACK, fsize_8X16, "%5s", "FatFs Init:");
     TFT_Printf(0, 16, COLOR_WHITE,COLOR_BLACK, fsize_6X8, "%5s", "wait 1 sec");
@@ -52,42 +52,66 @@ int user_main(void) {
             yuntai_set_flag(PID_CONTROL_FLAG);
         }
         switch (quest_num) {
-            case -1: {
-                // task1_laser_mode_set_flag = 0;//退出重置task1
-                // task2_laser_mode_set_flag = 0;//退出重置task2
-                break;
-            }
-            case 1: {
-                //基础第一问
-                if (!task1_laser_mode_set_flag) {
-                    task1_laser_mode_set_flag = 1;
-                    laser_mode_set(LASER_MODE_GPIO);
+            case -1:
+                {
+                    //空闲位
+                    break;
                 }
-                float err = the_yun_tai.Pitch_pid->now_err + the_yun_tai.Yaw_pid->now_err;
-                if (err < TASK1_ERROR && err > -TASK1_ERROR) {
-                    laser_set_level(1);
-                } else {
-                    laser_set_level(0);
-                };
-                break;
-            }
-            case 2: {
-                //基础第二问
-                if (!task2_laser_mode_set_flag) {
-                    task2_laser_mode_set_flag = 1;
-                    laser_mode_set(LASER_MODE_UART);
+            case 1:
+                {
+                    //基础第一问
+                    if (laser_mode_status != 0)//不是GPIO模式
+                    {
+                        laser_mode_set(LASER_MODE_GPIO);
+                    }
+                    float err = the_yun_tai.Pitch_pid->now_err + the_yun_tai.Yaw_pid->now_err;
+                    if (err < TASK1_ERROR && err > -TASK1_ERROR) {
+                        laser_set_level(1);
+                    }
+                    else {
+                        laser_set_level(0);
+                    };
+                    break;
                 }
-                HAL_Delay(10);
-                laser_transmit_data(laser_buffer, 6);//激光发送
-                break;
-            }
-            default: {
-                quest_num = 0;
-                pid_stop_flag = 1;
-                task1_laser_mode_set_flag = 0;//退出重置task1
-                task2_laser_mode_set_flag = 0;//退出重置task2
-                break;
-            }
+            case 2:
+                {
+                    //基础第二问
+                    HAL_Delay(10);
+                    laser_transmit_data(laser_buffer, 6);//激光发送
+                    break;
+                }
+            case 3:
+                {
+                    //基础第三问
+                    HAL_Delay(10);
+                    if (swap_uart_buffer_counter >= -1 && swap_uart_buffer_counter <= 1) {
+                        for (int j = 0; j < 5; j++) {
+                            laser_buffer[j] = laser_temp_buffer2[j];
+                        }
+                    }
+                    else if (swap_uart_buffer_counter <= 51 && swap_uart_buffer_counter >= 49) {
+                        for (int j = 0; j < 5; j++) {
+                            laser_buffer[j] = laser_temp_buffer1[j];
+                        }
+                        swap_uart_buffer_counter = -50;
+                    }
+                    swap_uart_buffer_counter++;
+                    laser_transmit_data(laser_buffer, 6);//激光发送
+                    break;
+                }
+
+            default:
+                {
+                    //quest_num 为0 停止位，只运行一次
+                    quest_num = -1;//重新把flag置回空闲位
+                    pid_stop_flag = 1;
+                    swap_uart_buffer_counter = -50;
+                    laser_buffer[1] = 'V';
+                    laser_buffer[2] = 'O';
+                    laser_buffer[3] = 'I';
+                    laser_buffer[4] = 'D';
+                    break;
+                }
         }
         if (pid_stop_flag) {
             pid_stop_flag = 0;

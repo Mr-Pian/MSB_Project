@@ -4,7 +4,8 @@
 
 #ifndef XPRINTF_DEF
 #define XPRINTF_DEF
-
+#include <string.h>
+#include <stdarg.h>
 #ifdef __cplusplus
 extern "C" {
 
@@ -30,20 +31,20 @@ extern "C" {
 extern void (*xfunc_output)(int);
 void xputc(int chr);
 void xfputc(void (*func)(int), int chr);
-void xputs(const char* str);
-void xfputs(void (*func)(int), const char* str);
-void xprintf(const char* fmt, ...);
-void xsprintf(char* buff, const char* fmt, ...);
-void xfprintf(void (*func)(int), const char* fmt, ...);
-void put_dump(const void* buff, unsigned long addr, int len, int width);
+void xputs(const char *str);
+void xfputs(void (*func)(int), const char *str);
+void xprintf(const char *fmt, ...);
+void xsprintf(char *buff, const char *fmt, ...);
+void xfprintf(void (*func)(int), const char *fmt, ...);
+void put_dump(const void *buff, unsigned long addr, int len, int width);
 #endif
 
 #if XF_USE_INPUT
 #define xdev_in(func) xfunc_input = (int(*)(void))(func)
 extern int (*xfunc_input)(void);
-int xgets(char* buff, int len);
-int xatoi(char** str, long* res);
-int xatof(char** str, double* res);
+int xgets(char *buff, int len);
+int xatoi(char **str, long *res);
+int xatof(char **str, double *res);
 #endif
 
 #ifdef __cplusplus
