@@ -26,6 +26,7 @@ int swap_uart_buffer_counter = -50;
 
 int user_main(void)
 {
+    laser_set_level(0); //turn off the laser after init
     TFTSPI_Init();
     TFT_Printf(0, 0, COLOR_WHITE,COLOR_BLACK, fsize_8X16, "%5s", "FatFs Init:");
     TFT_Printf(0, 16, COLOR_WHITE,COLOR_BLACK, fsize_6X8, "%5s", "wait 1 sec");
@@ -54,23 +55,15 @@ int user_main(void)
         switch (quest_num) {
             case -1:
                 {
-                    //空闲位
+                    //do nothing
                     break;
                 }
             case 1:
                 {
                     //基础第一问
-                    if (laser_mode_status != 0)//不是GPIO模式
-                    {
-                        laser_mode_set(LASER_MODE_GPIO);
-                    }
-                    float err = the_yun_tai.Pitch_pid->now_err + the_yun_tai.Yaw_pid->now_err;
-                    if (err < TASK1_ERROR && err > -TASK1_ERROR) {
-                        laser_set_level(1);
-                    }
-                    else {
-                        laser_set_level(0);
-                    };
+                    delay_ms(500);
+                    laser_set_level(1);
+                    quest_num = -1; //quit
                     break;
                 }
             case 2:
@@ -110,6 +103,7 @@ int user_main(void)
                     laser_buffer[2] = 'O';
                     laser_buffer[3] = 'I';
                     laser_buffer[4] = 'D';
+                    laser_set_level(0);
                     break;
                 }
         }

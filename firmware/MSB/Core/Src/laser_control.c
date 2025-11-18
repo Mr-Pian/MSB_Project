@@ -22,7 +22,7 @@ void laser_mode_set(laser_mode_t laser_mode) {
         GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
         GPIO_InitStruct.Pull = GPIO_NOPULL;
         GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-        GPIO_InitStruct.Alternate = GPIO_AF8_UART4;
+        GPIO_InitStruct.Alternate = GPIO_AF6_UART4;
         HAL_GPIO_Init(LASER_GPIO_PORT, &GPIO_InitStruct);
     } else if (laser_mode == LASER_MODE_GPIO) {
         GPIO_InitStruct.Pin = LASER_GPIO_PIN;

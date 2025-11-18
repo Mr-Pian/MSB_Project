@@ -94,18 +94,22 @@ void UART_Instru(uint8_t *uart_buffer, int buffer_length)
                 case 0x67: //上
                     /******* 调试界面 ********/
                     yuntai_flags_control_enable = 0;//暂时失能flag控制
+                    laser_set_level(1);
                     motor_set_related_position(MOTOR_PITCH, -(int16_t) (5 * uart_buffer[i + 3]));
                     break;
                 case 0x68: //左
                     yuntai_flags_control_enable = 0;//暂时失能flag控制
+                    laser_set_level(1);
                     motor_set_related_position(MOTOR_YAW, -(int16_t) (5 * uart_buffer[i + 3]));
                     break;
                 case 0x69: //右
                     yuntai_flags_control_enable = 0;//暂时失能flag控制
+                    laser_set_level(1);
                     motor_set_related_position(MOTOR_YAW, (int16_t) (5 * uart_buffer[i + 3]));
                     break;
                 case 0x70: //下
                     yuntai_flags_control_enable = 0;//暂时失能flag控制
+                    laser_set_level(1);
                     motor_set_related_position(MOTOR_PITCH, (int16_t) (5 * uart_buffer[i + 3]));
                     break;
                 case 0xCC: //确定
@@ -121,6 +125,7 @@ void UART_Instru(uint8_t *uart_buffer, int buffer_length)
                     }
                     break;
                 case 0xaf: //退出调试界面标志
+                    laser_set_level(0);
                     yuntai_flags_control_enable = 1;//重新使能flag控制
                     break;
                 /******* 调试界面 ********/
