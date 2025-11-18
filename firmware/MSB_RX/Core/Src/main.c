@@ -62,19 +62,25 @@ void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
 void Refresh_SSD1306(void) {
   ssd1306_clear(0);
-  ssd1306_draw_string_12_24(0, 0, ctrl,1, 1 );
+  ssd1306_draw_string_12_24(0, 5, ctrl,1, 1 );
   sprintf(text, "%d.%d",Value/10,Value%10);
-  ssd1306_draw_string_12_24(80,0,text,1,1);
+  ssd1306_draw_string_12_24(80,5,text,1,1);
   ssd1306_refresh();
   ssd1306_refresh();//主页
 };
-void ZDT_SETSPEED(int speed) {
+void ZDT_SetSpeed_Right(int speed) {
   // Placeholder for speed setting function
    char buf[8]={0x01,0xF6,0x00,0x00,0x00,0x00,0x00,0x6B};
    buf[4]=speed&0xFF;
    buf[5]=(speed>>8)&0xFF;
    HAL_UART_Transmit(&huart2, (uint8_t*)buf, 8, HAL_MAX_DELAY);
 };
+void ZDT_SetSpeed_Left(int speed) {
+  char buf[8]={0x01,0xF6,0x01,0x00,0x00,0x00,0x00,0x6B};
+  buf[4]=speed&0xFF;
+  buf[5]=(speed>>8)&0xFF;
+  HAL_UART_Transmit(&huart2, (uint8_t*)buf, 8, HAL_MAX_DELAY);
+}
 void ZDT_STOP(void) {
   char buf[5]={0x01, 0xFE ,0x98 ,0x00, 0x6B};
   HAL_UART_Transmit(&huart2, (uint8_t*)buf, 5, HAL_MAX_DELAY);
@@ -122,10 +128,12 @@ int main(void)
   HAL_Delay(100);
   ssd1306_init();
   ssd1306_clear(0);
-  ssd1306_draw_string_12_24(45, 0, "MSB",1, 1 );
+  ssd1306_draw_string_12_24(45, 5, "MSB",1, 1 );
   ssd1306_refresh();
   ssd1306_refresh();//标题
-
+  while (1) {
+    if (HAL_GPIO_ReadPin(CTRL_GPIO_Port, CTRL_Pin)==GPIO_PIN_RESET) break;
+  }
   HAL_Delay(200);
   Refresh_SSD1306();
 
@@ -185,15 +193,27 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+#define DELAY_LEN 2
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim) {
   if (htim->Instance == TIM1) {
+    static int LorR=0,Uf=0,Df=0;
+    static int Delay=DELAY_LEN,DDelay=DELAY_LEN;
+
     if (HAL_GPIO_ReadPin(CTRL_GPIO_Port, CTRL_Pin) == GPIO_PIN_RESET && ctrl_flag == 0) {
       ctrl_flag = 1;
       if (strcmp("Stop", ctrl) == 0) {
-        strcpy(ctrl, "Start");
-        Refresh_SSD1306();
-        ZDT_SETSPEED((int) ((float) Value * 19.0 / 10.0));
-      } else {
+        if (LorR == 0) {
+          strcpy(ctrl, "Right");
+          Refresh_SSD1306();
+          ZDT_SetSpeed_Right((int) ((float) Value * 19.0 / 10.0));
+          LorR=1;
+        }else {
+          strcpy(ctrl, "Left");
+          Refresh_SSD1306();
+          ZDT_SetSpeed_Left((int) ((float) Value * 19.0 / 10.0));
+          LorR=0;
+        }
+      }else {
         strcpy(ctrl, "Stop");
         Refresh_SSD1306();
         ZDT_STOP();
@@ -201,25 +221,49 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim) {
     } else if (HAL_GPIO_ReadPin(CTRL_GPIO_Port, CTRL_Pin) == GPIO_PIN_SET) {
       ctrl_flag = 0;
     }
-
-    if (HAL_GPIO_ReadPin(UP_GPIO_Port, UP_Pin) == GPIO_PIN_RESET && up_flag == 0 && strcmp("Stop", ctrl) == 0) {
-      up_flag = 1;
-      if (Value < 60) {
-        Value+=2;
+    //*******************************************************************************************//
+    if (HAL_GPIO_ReadPin(UP_GPIO_Port, UP_Pin) == GPIO_PIN_RESET  && strcmp("Stop", ctrl) == 0) {
+      if (Uf==0) {
+        Uf=1;
+        if (Value < 60) {
+          Value+=1;
+        }
+      }else {
+        Delay--;
+        if (Delay <= 0) {
+          Delay=DELAY_LEN;
+          if (Value < 60) {
+            Value+=1;
+          }
+        }
       }
       Refresh_SSD1306();
+      return;
     } else if (HAL_GPIO_ReadPin(UP_GPIO_Port, UP_Pin) == GPIO_PIN_SET) {
-      up_flag = 0;
+      Delay=DELAY_LEN;
+      Uf=0;
     }
-
-    if (HAL_GPIO_ReadPin(DOWN_GPIO_Port, DOWN_Pin) == GPIO_PIN_RESET && down_flag == 0 && strcmp("Stop", ctrl) == 0) {
-      down_flag = 1;
-      if (Value > 10) {
-        Value-=2;
+    //*******************************************************************************************//
+    if (HAL_GPIO_ReadPin(DOWN_GPIO_Port, DOWN_Pin) == GPIO_PIN_RESET  && strcmp("Stop", ctrl) == 0) {
+      if (Df==0) {
+        Df=1;
+        if (Value >10) {
+          Value-=1;
+        }
+      }else {
+        DDelay--;
+        if (DDelay <= 0) {
+          DDelay=DELAY_LEN;
+          if (Value >10) {
+            Value-=1;
+          }
+        }
       }
       Refresh_SSD1306();
+      return;
     } else if (HAL_GPIO_ReadPin(DOWN_GPIO_Port, DOWN_Pin) == GPIO_PIN_SET) {
-      down_flag = 0;
+      DDelay=DELAY_LEN;
+      Df = 0;
     }
 
 

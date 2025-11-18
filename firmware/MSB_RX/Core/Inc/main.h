@@ -57,12 +57,12 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define CTRL_Pin GPIO_PIN_11
-#define CTRL_GPIO_Port GPIOA
+#define UP_Pin GPIO_PIN_11
+#define UP_GPIO_Port GPIOA
 #define DOWN_Pin GPIO_PIN_3
 #define DOWN_GPIO_Port GPIOB
-#define UP_Pin GPIO_PIN_8
-#define UP_GPIO_Port GPIOB
+#define CTRL_Pin GPIO_PIN_8
+#define CTRL_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 
