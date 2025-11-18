@@ -84,12 +84,12 @@ int user_main(void)
                 {
                     //基础第三问
                     HAL_Delay(10);
-                    if (swap_uart_buffer_counter >= -1 && swap_uart_buffer_counter <= 1) {
+                    if (swap_uart_buffer_counter == 0) {
                         for (int j = 0; j < 5; j++) {
                             laser_buffer[j] = laser_temp_buffer2[j];
                         }
                     }
-                    else if (swap_uart_buffer_counter <= 51 && swap_uart_buffer_counter >= 49) {
+                    else if (swap_uart_buffer_counter == 50) {
                         for (int j = 0; j < 5; j++) {
                             laser_buffer[j] = laser_temp_buffer1[j];
                         }

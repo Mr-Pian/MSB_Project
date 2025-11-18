@@ -23,7 +23,7 @@ uint8_t SD_Pop_flag = 0;
 uint8_t yuntai_flags_control_enable = 1;//flag使能控制 默认使能
 uint8_t Fatfs_save_flag = 0;//fatfs 前后台保存flag
 uint8_t pid_stop_flag = 0;
-int8_t quest_num = 0;
+int quest_num = 0;
 uint8_t laser_buffer[20] = {0x1a, 0x56, 0x4f, 0x49, 0x44, 0x0a};
 uint8_t task3_first_code_received = 0;//第三问接受到第一个字符串标志
 uint8_t laser_temp_buffer1[20] = {0};
@@ -68,7 +68,6 @@ void Handle_btn_event(void)//event类型判断
         }
         else if (data == 0x00) {
             //没按
-            quest_num = -1;
             yuntai_set_flag(STABLE_CONTROL_FLAG);
         }
     }

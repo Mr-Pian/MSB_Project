@@ -60,7 +60,7 @@ extern uint8_t Fatfs_save_flag;//fatfs 前后台保存flag
 extern uint8_t pid_start_flag;
 extern uint8_t pid_stop_flag;
 extern uint8_t pid_control_flag;
-extern int8_t quest_num;
+extern int quest_num;
 extern uint8_t laser_buffer[20];
 extern uint8_t laser_temp_buffer1[20];
 extern uint8_t laser_temp_buffer2[20];
