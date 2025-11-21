@@ -15,7 +15,7 @@ uint8_t motor_send_delay_flag = 0;//两个云台电机总线发送延迟状态�
 */
 //实际云台控制频率100hz
 void yuntai_control_driver(void) {
-    if (yuntai_flags_control_enable) {
+    if (yuntai_flags_control_enable_debug_mode && yuntai_flags_control_enable_none_debug_mode) {
         if (yuntai_flags.motor_param_flag == 1) {
             //电机调参
             if (motor_send_delay_flag == 0) {
@@ -84,8 +84,6 @@ void yuntai_set_zero_point(void) {
     motor_set_zero_point(MOTOR_YAW);
     delay_ms(5);
     motor_set_zero_point(MOTOR_PITCH);
-    delay_ms(5);
-    motor_set_zero_point(MOTOR_CAMERA);
     delay_ms(5);
 }
 

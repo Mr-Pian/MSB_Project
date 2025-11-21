@@ -48,13 +48,14 @@ void draw_sd(uint8_t sd_state);
 void draw_info(uint8_t info);
 void UART_Instru(uint8_t *uart_buffer, int buffer_length);
 void XpyEncode(uint8_t *buf, uint8_t *code);
-void XqzEncode(const uint8_t *buf, uint8_t *code);
+void XqzEncode(const uint8_t *buf, uint8_t *code, int first_num);
+void Unpack_angle(uint8_t *buf, int first_num);
 
 
 extern struct button_obj_t ecbt;
 extern MSB_data_typedef MSB_Data;//存储数据结构体
 extern uint8_t SD_Pop_flag;
-extern uint8_t yuntai_flags_control_enable;
+extern uint8_t yuntai_flags_control_enable_debug_mode;
 extern uint8_t buffer_from_screen[100];//串口屏接受缓冲区
 extern uint8_t Fatfs_save_flag;//fatfs 前后台保存flag
 extern uint8_t pid_start_flag;
@@ -64,4 +65,7 @@ extern int quest_num;
 extern uint8_t laser_buffer[20];
 extern uint8_t laser_temp_buffer1[20];
 extern uint8_t laser_temp_buffer2[20];
+extern float yun_tai_init_angle[2];
+extern uint8_t set_zero_point_flag;
+extern uint8_t yuntai_flags_control_enable_none_debug_mode;
 #endif //MSB_HCI_H

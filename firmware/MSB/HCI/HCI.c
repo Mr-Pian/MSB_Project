@@ -20,14 +20,19 @@ uint8_t pid_start_flag = 0;
 uint8_t pid_control_flag = 0;
 uint8_t data = 0;
 uint8_t SD_Pop_flag = 0;
-uint8_t yuntai_flags_control_enable = 1;//flag使能控制 默认使能
+uint8_t yuntai_flags_control_enable_debug_mode = 1;//flag使能控制 默认使能
 uint8_t Fatfs_save_flag = 0;//fatfs 前后台保存flag
 uint8_t pid_stop_flag = 0;
 int quest_num = 0;
 uint8_t laser_buffer[20] = {0x1a, 0x56, 0x4f, 0x49, 0x44, 0x0a};
-uint8_t task3_first_code_received = 0;//第三问接受到第一个字符串标志
+uint8_t task3_first_code_received = 0;//第三问接收到第一个字符串标志
+uint8_t task4_first_code_received = 0;//第四问接收到字符串标志
+uint8_t task5_first_code_received = 0;//第五问接收到两个字符串标志
 uint8_t laser_temp_buffer1[20] = {0};
 uint8_t laser_temp_buffer2[20] = {0};
+uint8_t set_zero_point_flag = 0;//调零flag（里面有100ms的延时）
+uint8_t yuntai_flags_control_enable_none_debug_mode = 1;//4,5问启动前专用的循环控制失能flag
+float yun_tai_init_angle[2] ={0};//扩展问一键启动传过来的初始启动角
 
 //必要缓冲区定义
 uint8_t buffer_from_screen[100] = {0};//串口屏接收缓冲区
@@ -93,22 +98,22 @@ void UART_Instru(uint8_t *uart_buffer, int buffer_length)
             switch (uart_buffer[i + 1]) {
                 case 0x67: //上
                     /******* 调试界面 ********/
-                    yuntai_flags_control_enable = 0;//暂时失能flag控制
+                    yuntai_flags_control_enable_debug_mode = 0;//暂时失能flag控制
                     laser_set_level(1);
                     motor_set_related_position(MOTOR_PITCH, -(int16_t) (5 * uart_buffer[i + 3]));
                     break;
                 case 0x68: //左
-                    yuntai_flags_control_enable = 0;//暂时失能flag控制
+                    yuntai_flags_control_enable_debug_mode = 0;//暂时失能flag控制
                     laser_set_level(1);
                     motor_set_related_position(MOTOR_YAW, -(int16_t) (5 * uart_buffer[i + 3]));
                     break;
                 case 0x69: //右
-                    yuntai_flags_control_enable = 0;//暂时失能flag控制
+                    yuntai_flags_control_enable_debug_mode = 0;//暂时失能flag控制
                     laser_set_level(1);
                     motor_set_related_position(MOTOR_YAW, (int16_t) (5 * uart_buffer[i + 3]));
                     break;
                 case 0x70: //下
-                    yuntai_flags_control_enable = 0;//暂时失能flag控制
+                    yuntai_flags_control_enable_debug_mode = 0;//暂时失能flag控制
                     laser_set_level(1);
                     motor_set_related_position(MOTOR_PITCH, (int16_t) (5 * uart_buffer[i + 3]));
                     break;
@@ -126,14 +131,12 @@ void UART_Instru(uint8_t *uart_buffer, int buffer_length)
                     break;
                 case 0xaf: //退出调试界面标志
                     laser_set_level(0);
-                    yuntai_flags_control_enable = 1;//重新使能flag控制
+                    yuntai_flags_control_enable_debug_mode = 1;//重新使能flag控制
                     break;
-                /******* 调试界面 ********/
-
-                /******* 题目界面 ********/
+                    /******* 调试界面 ********/
+                    /******* 题目界面 ********/
                 case 0x78: //退出所有的问
                     quest_num = 0;
-                    task3_first_code_received = 0;
                     break;
                 case 0xb1: //基础第一问
                     quest_num = 1;
@@ -141,7 +144,7 @@ void UART_Instru(uint8_t *uart_buffer, int buffer_length)
                     break;
                 case 0xb2: //基础第二问
                     //做帧
-                    XqzEncode(uart_buffer, laser_buffer);
+                    XqzEncode(uart_buffer, laser_buffer, i);
                     quest_num = 2;
                     pid_start_flag = 1;
                     break;
@@ -149,7 +152,7 @@ void UART_Instru(uint8_t *uart_buffer, int buffer_length)
                     if (!task3_first_code_received) {
                         //第一个code
                         task3_first_code_received = 1;
-                        XqzEncode(uart_buffer, laser_temp_buffer1);
+                        XqzEncode(uart_buffer, laser_temp_buffer1, i);
                         laser_buffer[1] = 'W';
                         laser_buffer[2] = 'A';
                         laser_buffer[3] = 'I';
@@ -157,7 +160,8 @@ void UART_Instru(uint8_t *uart_buffer, int buffer_length)
                     }
                     else {
                         //第二次受到code,直接开始控制
-                        XqzEncode(uart_buffer, laser_temp_buffer2);
+                        task3_first_code_received = 0;
+                        XqzEncode(uart_buffer, laser_temp_buffer2, i);
                         for (int j = 0; j < 5; j++) {
                             laser_buffer[j] = laser_temp_buffer1[j];
                         }
@@ -165,8 +169,62 @@ void UART_Instru(uint8_t *uart_buffer, int buffer_length)
                         pid_start_flag = 1;
                     }
                     break;
-                /******* 题目界面 ********/
-
+                case 0xb4: //扩展第一问
+                    //第一个code
+                    task4_first_code_received = 1;
+                    XqzEncode(uart_buffer, laser_temp_buffer1, i);
+                    laser_buffer[1] = 'B';
+                    laser_buffer[2] = 'U';
+                    laser_buffer[3] = 'T';
+                    laser_buffer[4] = 'N';
+                    break;
+                case 0xb5: //扩展第二问
+                    if (task5_first_code_received == 0) {
+                        //第一个code
+                        task5_first_code_received = 1;
+                        XqzEncode(uart_buffer, laser_temp_buffer1, i);
+                        laser_buffer[1] = 'W';
+                        laser_buffer[2] = 'A';
+                        laser_buffer[3] = 'I';
+                        laser_buffer[4] = 'T';
+                    }
+                    else if (task5_first_code_received == 1){
+                        //第二次收到code
+                        task5_first_code_received = 2;
+                        XqzEncode(uart_buffer, laser_temp_buffer2, i);
+                        laser_buffer[1] = 'B';
+                        laser_buffer[2] = 'U';
+                        laser_buffer[3] = 'T';
+                        laser_buffer[4] = 'N';
+                    }
+                    break;
+                    /******* 题目界面 ********/
+                    /******* 传递角度 ********/
+                case 0x27:
+                    if (task4_first_code_received) { //扩展第一问信息接收完成
+                        task4_first_code_received = 0;
+                        Unpack_angle(uart_buffer, i);
+                        for (int j = 0; j < 5; j++) {
+                            laser_buffer[j] = laser_temp_buffer1[j];
+                        }
+                        quest_num = 4;
+                    }
+                    else if (task5_first_code_received == 2) { //扩展第二问信息接收完成
+                        task5_first_code_received = 0;
+                        Unpack_angle(uart_buffer, i);
+                        for (int j = 0; j < 5; j++) {
+                            laser_buffer[j] = laser_temp_buffer1[j];
+                        }
+                        quest_num = 5;
+                    }
+                    break;
+                    /******* 传递角度 ********/
+                    /******* 调零界面 ********/
+                case 0x10:
+                    yuntai_flags_control_enable_debug_mode = 0;
+                    set_zero_point_flag = 1;
+                    break;
+                    /******* 调零界面 ********/
                 default: //不应该发生
                     break;
             }
@@ -174,8 +232,29 @@ void UART_Instru(uint8_t *uart_buffer, int buffer_length)
     }
 }
 
-/*******************************   串口屏 状态机结束  ************************************/
-/****************************   串口屏数据编码解包函开始  *********************************/
+/****************************  串口屏云台俯仰角解算开始  *********************************/
+void Unpack_angle(uint8_t *buf, int first_num)
+{
+    switch (buf[first_num + 3]) {
+        case 0x01: //7buttons
+            yun_tai_init_angle[1] = 0.0f; //pitch角
+            yun_tai_init_angle[0] = -30.0f * (4.0f-(float)buf[first_num + 5]); //yaw角
+            break;
+        case 0x02: //7buttons
+            yun_tai_init_angle[1] = -14.0f; //pitch角
+            yun_tai_init_angle[0] = -30.0f * (4.0f-(float)buf[first_num + 5]); //yaw角
+            break;
+        case 0x03: //15buttons
+            yun_tai_init_angle[1] = -20.0f; //pitch角
+            yun_tai_init_angle[0] = -12.85714285f * (8.0f-(float)buf[first_num + 5]); //yaw角
+            break;
+        default:
+            break;
+    }
+}
+
+/****************************  串口屏云台俯仰角解算结束  *********************************/
+/*****************************   串口屏数据编码解包开始  **********************************/
 void XpyEncode(uint8_t *buf, uint8_t *code)
 {
     // 串口屏数据编码，buf为帧头地址
@@ -206,16 +285,16 @@ void XpyEncode(uint8_t *buf, uint8_t *code)
     code[4] = 0x0a;
 }
 
-void XqzEncode(const uint8_t *buf, uint8_t *code)
+void XqzEncode(const uint8_t *buf, uint8_t *code, int first_num)
 {
     for (int i = 1; i < 5; i++) {
-        code[i] = buf[i + 1];
+        code[i] = buf[first_num + i + 1];
     }
     code[0] = 0x1a;//帧头
     code[5] = 0x0a;//帧尾
 }
 
-/****************************   串口屏数据编码解包函结束  *********************************/
+/*****************************   串口屏数据编码解包结束  *********************************/
 /******************************* LCD 显示绘制部分 **************************************/
 //Motor 状态绘制 0代表Lock 1代表pid 2代表free 3代表调参
 void draw_motor(uint8_t state, uint8_t last_state)

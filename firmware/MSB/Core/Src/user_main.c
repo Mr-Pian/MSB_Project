@@ -46,11 +46,19 @@ int user_main(void)
             Fatfs_save_flag = 0;
             Write_SD_data(&MSB_Data);
         }
-        if (pid_start_flag) {
+        if (pid_start_flag) {//Pid开始
             pid_start_flag = 0;
             pid_control_flag = 1;
             yuntai_set_zero_point();
             yuntai_set_flag(PID_CONTROL_FLAG);
+        }
+        if (set_zero_point_flag) {//云台调零点
+            set_zero_point_flag = 0;
+            yuntai_set_zero_point();
+            delay_ms(10);
+            motor_set_related_position(MOTOR_PITCH, 0);
+            delay_ms(10);
+            motor_set_related_position(MOTOR_YAW, 0);
         }
         switch (quest_num) {
             case -1:
@@ -90,6 +98,54 @@ int user_main(void)
                     }
                     swap_uart_buffer_counter++;
                     laser_transmit_data(laser_buffer, 6);//激光发送
+                    break;
+                }
+            case 4:
+                {
+                    yuntai_flags_control_enable_none_debug_mode = 0;
+                    pid_control_flag = 1;
+                    delay_ms(5);
+                    motor_set_position_angle(MOTOR_YAW, yun_tai_init_angle[0]);
+                    delay_ms(20);
+                    motor_set_position_angle(MOTOR_PITCH, yun_tai_init_angle[1]);
+                    delay_ms(400); //等待电机转到位置
+                    yuntai_set_zero_point();
+                    yuntai_flags_control_enable_none_debug_mode = 1;
+                    yuntai_set_flag(PID_CONTROL_FLAG);
+                    while (quest_num) {
+                        HAL_Delay(10);
+                        laser_transmit_data(laser_buffer, 6);//激光发送
+                    }
+                    break;
+                }
+            case 5:
+                {
+                    yuntai_flags_control_enable_none_debug_mode = 0;
+                    pid_control_flag = 1;
+                    delay_ms(5);
+                    motor_set_position_angle(MOTOR_YAW, yun_tai_init_angle[0]);
+                    delay_ms(20);
+                    motor_set_position_angle(MOTOR_PITCH, yun_tai_init_angle[1]);
+                    delay_ms(400); //等待电机转到位置
+                    yuntai_set_zero_point();
+                    yuntai_flags_control_enable_none_debug_mode = 1;
+                    yuntai_set_flag(PID_CONTROL_FLAG);
+                    while (quest_num) {
+                        HAL_Delay(10);
+                        if (swap_uart_buffer_counter == 0) {
+                            for (int j = 0; j < 5; j++) {
+                                laser_buffer[j] = laser_temp_buffer2[j];
+                            }
+                        }
+                        else if (swap_uart_buffer_counter == 50) {
+                            for (int j = 0; j < 5; j++) {
+                                laser_buffer[j] = laser_temp_buffer1[j];
+                            }
+                            swap_uart_buffer_counter = -50;
+                        }
+                        swap_uart_buffer_counter++;
+                        laser_transmit_data(laser_buffer, 6);//激光发送
+                    }
                     break;
                 }
 
