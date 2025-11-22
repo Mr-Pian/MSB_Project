@@ -50,7 +50,7 @@ void UART_Instru(uint8_t *uart_buffer, int buffer_length);
 void XpyEncode(uint8_t *buf, uint8_t *code);
 void XqzEncode(const uint8_t *buf, uint8_t *code, int first_num);
 void Unpack_angle(uint8_t *buf, int first_num);
-
+void task6_Encode(const uint8_t *buf, uint8_t *code, int first_num);
 
 extern struct button_obj_t ecbt;
 extern MSB_data_typedef MSB_Data;//存储数据结构体
@@ -68,4 +68,6 @@ extern uint8_t laser_temp_buffer2[20];
 extern float yun_tai_init_angle[2];
 extern uint8_t set_zero_point_flag;
 extern uint8_t yuntai_flags_control_enable_none_debug_mode;
+extern uint8_t laser_buffer_for_task6[20];
+extern uint8_t task6_first_code_received;
 #endif //MSB_HCI_H

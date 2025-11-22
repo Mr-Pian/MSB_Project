@@ -148,6 +148,12 @@ int user_main(void)
                     }
                     break;
                 }
+            case 6:
+                {
+                    HAL_Delay(10);
+                    laser_transmit_data(laser_buffer_for_task6, 3);//激光发送
+                    break;
+                }
 
             default:
                 {
@@ -155,6 +161,8 @@ int user_main(void)
                     quest_num = -1;//重新把flag置回空闲位
                     pid_stop_flag = 1;
                     swap_uart_buffer_counter = -50;
+                    task6_first_code_received = 0; //创新点flag重置
+                    yuntai_flags_control_enable_none_debug_mode = 1;
                     laser_buffer[1] = 'V';
                     laser_buffer[2] = 'O';
                     laser_buffer[3] = 'I';

@@ -28,8 +28,10 @@ uint8_t laser_buffer[20] = {0x1a, 0x56, 0x4f, 0x49, 0x44, 0x0a};
 uint8_t task3_first_code_received = 0;//第三问接收到第一个字符串标志
 uint8_t task4_first_code_received = 0;//第四问接收到字符串标志
 uint8_t task5_first_code_received = 0;//第五问接收到两个字符串标志
+uint8_t task6_first_code_received = 0;//创新点接收到第一个信息后标志
 uint8_t laser_temp_buffer1[20] = {0};
 uint8_t laser_temp_buffer2[20] = {0};
+uint8_t laser_buffer_for_task6[20] = {0};
 uint8_t set_zero_point_flag = 0;//调零flag（里面有100ms的延时）
 uint8_t yuntai_flags_control_enable_none_debug_mode = 1;//4,5问启动前专用的循环控制失能flag
 float yun_tai_init_angle[2] ={0};//扩展问一键启动传过来的初始启动角
@@ -198,6 +200,18 @@ void UART_Instru(uint8_t *uart_buffer, int buffer_length)
                         laser_buffer[4] = 'N';
                     }
                     break;
+                case 0xb6: //创新
+                    task6_Encode(uart_buffer, laser_buffer_for_task6, i);
+                    if (!task6_first_code_received) {
+                        task6_first_code_received = 1;
+                        quest_num = 6;
+                        pid_start_flag = 1;
+                        laser_buffer[1] = 'B';
+                        laser_buffer[2] = 'U';
+                        laser_buffer[3] = 'Z';
+                        laser_buffer[4] = 'Z';
+
+                    }
                     /******* 题目界面 ********/
                     /******* 传递角度 ********/
                 case 0x27:
@@ -283,6 +297,19 @@ void XpyEncode(uint8_t *buf, uint8_t *code)
     code[2] = (temp[1] << 4) | (temp[2] >> 2);
     code[3] = (temp[2] << 6) | (temp[3]);
     code[4] = 0x0a;
+}
+
+void task6_Encode(const uint8_t *buf, uint8_t *code, int first_num)
+{
+    code[0] = 0xaa;//帧头
+    // code[1] = buf[first_num+3]; //弹起状态
+    if (buf[first_num+3] == 0x01) {
+        code[1] = buf[first_num+5]; //音符
+    }
+    else {
+        code[1] = 0x00; //弹起为0x00
+    }
+    code[2] = 0x0a;//帧尾
 }
 
 void XqzEncode(const uint8_t *buf, uint8_t *code, int first_num)
