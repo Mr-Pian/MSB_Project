@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import time
-import serial
+# import serial
 import struct
 
 def create_signed_packet(num1, num2, endian='big'):
@@ -116,28 +116,32 @@ if __name__ == "__main__":
     previous_time = 0
     now_time = 0
     # --- 2. 打开摄像头 ---
-    cap = cv2.VideoCapture(0) # 0 通常是你的默认摄像头
+    cap = cv2.VideoCapture(0, cv2.CAP_V4L2) # 0 通常是你的默认摄像头
+    cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+    cap.set(cv2.CAP_PROP_FPS,120)
 
     if not cap.isOpened():
         print("错误：无法打开摄像头。")
         exit()
 
     # 串口设备名称，树莓派 5 上 /dev/serial0 通常会映射到 UART0
-    port = '/dev/serial0'
-    # 波特率（根据需要修改，常用 9600、115200 等）
-    baudrate = 115200
-    # 打开串口
-    try:
-        ser = serial.Serial(port=port,
-                            baudrate=baudrate,
-                            bytesize=serial.EIGHTBITS,
-                            parity=serial.PARITY_NONE,
-                            stopbits=serial.STOPBITS_ONE,
-                            timeout=1)  # 读取超时 1 秒
-    except serial.SerialException as e:
-        print(f"无法打开串口 {port}: {e}")
+    # port = '/dev/serial0'
+    # # 波特率（根据需要修改，常用 9600、115200 等）
+    # baudrate = 115200
+    # # 打开串口
+    # try:
+    #     ser = serial.Serial(port=port,
+    #                         baudrate=baudrate,
+    #                         bytesize=serial.EIGHTBITS,
+    #                         parity=serial.PARITY_NONE,
+    #                         stopbits=serial.STOPBITS_ONE,
+    #                         timeout=1)  # 读取超时 1 秒
+    # except serial.SerialException as e:
+    #     print(f"无法打开串口 {port}: {e}")
  
-    print(f"串口 {port} 已打开，波特率 {baudrate}")
+    # print(f"串口 {port} 已打开，波特率 {baudrate}")
 
     print("按 'q' 键退出...")
 
@@ -216,7 +220,7 @@ if __name__ == "__main__":
                     print("交点:", intersection_point)
                     
                     #串口发送
-                    ser.write(create_signed_packet(intersection_point[0], intersection_point[1]))
+                    # ser.write(create_signed_packet(intersection_point[0], intersection_point[1]))
                     
                     cv2.drawMarker(frame, 
                                 intersection_point,
